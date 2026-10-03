@@ -14,17 +14,32 @@ export async function getDashboardStats({ actor, institutionId, startDate, endDa
     });
     const allowedInstIds = memberships.map((m) => m.institutionId);
 
+    if (allowedInstIds.length === 0) {
+      throw new HttpError(403, "Nu faci parte din nicio instituție.");
+    }
     if (targetInstitutionId && !allowedInstIds.includes(targetInstitutionId)) {
       throw new HttpError(403, "Nu ai acces la datele acestei instituții.");
     }
-    if (!targetInstitutionId && allowedInstIds.length > 0) {
+    if (!targetInstitutionId) {
       targetInstitutionId = allowedInstIds[0];
     }
   }
 
   const dateFilter = {};
-  if (startDate) dateFilter.gte = new Date(startDate);
-  if (endDate) dateFilter.lte = new Date(endDate);
+  if (startDate) {
+    const parsedStart = new Date(startDate);
+    if (isNaN(parsedStart.getTime())) {
+      throw new HttpError(400, "Data de început (startDate) este invalidă.");
+    }
+    dateFilter.gte = parsedStart;
+  }
+  if (endDate) {
+    const parsedEnd = new Date(endDate);
+    if (isNaN(parsedEnd.getTime())) {
+      throw new HttpError(400, "Data de sfârșit (endDate) este invalidă.");
+    }
+    dateFilter.lte = parsedEnd;
+  }
 
   const reportWhere = {
     ...(Object.keys(dateFilter).length ? { createdAt: dateFilter } : {}),

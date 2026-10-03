@@ -1,16 +1,26 @@
+import crypto from "node:crypto";
 import { prisma } from "../../config/database.js";
 import { HttpError } from "../../common/utils/httpError.js";
-import { sendEmail } from "../../common/utils/email.js";
+import { sendEmail, escapeHtml } from "../../common/utils/email.js";
 import { formatReportCode } from "../problems/problems.constants.js";
 import { createNotification } from "../notifications/notifications.service.js";
 
 export async function generateReferenceNumber() {
   const year = new Date().getFullYear();
   const count = await prisma.complaint.count();
-  return `#REF-${year}-${String(count + 1).padStart(4, "0")}`;
+  const salt = crypto.randomBytes(2).toString("hex").toUpperCase();
+  return `#REF-${year}-${String(count + 1).padStart(4, "0")}-${salt}`;
 }
 
 export async function createComplaint({ reportId, actor, institutionId, channel = "EMAIL" }) {
+  const validChannels = ["EMAIL", "PDF", "PORTAL"];
+  if (!validChannels.includes(channel)) {
+    throw new HttpError(
+      400,
+      `Canalul de transmitere „${channel}” este invalid. Valori permise: ${validChannels.join(", ")}.`
+    );
+  }
+
   const report = await prisma.report.findUnique({
     where: { id: reportId },
     include: {
@@ -21,13 +31,22 @@ export async function createComplaint({ reportId, actor, institutionId, channel 
   if (!report) throw new HttpError(404, "Sesizarea nu există.");
 
   // Identificare instituție responsabilă
-  const targetInstitutionId = institutionId || report.department?.institutionId;
-  if (!targetInstitutionId) {
+  const responsibleInstitutionId = report.department?.institutionId;
+  if (!responsibleInstitutionId) {
     throw new HttpError(
       400,
       "Sesizarea nu este repartizată unei instituții căreia să-i poată fi adresată o reclamație formală."
     );
   }
+
+  if (institutionId && institutionId !== responsibleInstitutionId) {
+    throw new HttpError(
+      400,
+      "Sesizarea formală poate fi adresată doar instituției responsabile pentru această problemă."
+    );
+  }
+
+  const targetInstitutionId = responsibleInstitutionId;
 
   // Verificare permisiune: doar autorul, susținătorii (+1) sau administratorii pot formula sesizarea
   if (actor.role !== "ADMIN" && report.reporterId !== actor.id) {
@@ -109,8 +128,8 @@ export async function createComplaint({ reportId, actor, institutionId, channel 
       html: `
         <h2>Sesizare formală înregistrată</h2>
         <p>A fost expediată o nouă sesizare oficială pentru problema <strong>${formatReportCode(report.number)}</strong>.</p>
-        <p><strong>Titlu:</strong> ${report.title}</p>
-        <p><strong>Adresă:</strong> ${report.address || "Nesemnată"}</p>
+        <p><strong>Titlu:</strong> ${escapeHtml(report.title)}</p>
+        <p><strong>Adresă:</strong> ${escapeHtml(report.address || "Nesemnată")}</p>
         <p><strong>Număr referință:</strong> ${referenceNumber}</p>
         <p><strong>Termen legal de răspuns:</strong> ${dueDays} zile (până la ${dueAt.toLocaleDateString("ro-RO")}).</p>
       `,
@@ -276,8 +295,8 @@ export async function answerComplaint({ complaintId, actor, answerText }) {
 
   const now = new Date();
 
-  return prisma.$transaction(async (tx) => {
-    const updated = await tx.complaint.update({
+  const updated = await prisma.$transaction(async (tx) => {
+    const res = await tx.complaint.update({
       where: { id: complaintId },
       data: {
         status: "ANSWERED",
@@ -299,7 +318,7 @@ export async function answerComplaint({ complaintId, actor, answerText }) {
       },
     });
 
-    return updated;
+    return res;
   });
 
   if (complaint.report?.reporterId) {
@@ -442,4 +461,16 @@ export async function checkAndEscalateOverdue() {
     escalated: escalatedCount,
     overdue: overdueCount,
   };
+}
+
+export function startEscalationJob(intervalMs = 60 * 60 * 1000) {
+  const timer = setInterval(async () => {
+    try {
+      await checkAndEscalateOverdue();
+    } catch (err) {
+      console.error("[CRON] Escalation check error:", err);
+    }
+  }, intervalMs);
+  timer.unref();
+  return timer;
 }

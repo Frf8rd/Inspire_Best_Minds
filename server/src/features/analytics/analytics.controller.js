@@ -1,3 +1,4 @@
+import { prisma } from "../../config/database.js";
 import { calculateRecurringZones } from "../problems/problems.intelligence.js";
 import * as service from "./analytics.service.js";
 import { HttpError } from "../../common/utils/httpError.js";
@@ -21,12 +22,32 @@ export const getRecurringZonesController = handle(async (req, res) => {
   const limit = Math.min(200, Math.max(1, parseInt(req.query.limit, 10) || 50));
   const refLat = Number.isFinite(Number(req.query.refLat)) ? Number(req.query.refLat) : 47;
 
+  let targetInstitutionId = req.query.institutionId;
+  if (req.user?.role === "STAFF") {
+    const memberships = await prisma.membership.findMany({
+      where: { userId: req.user.id },
+      select: { institutionId: true },
+    });
+    const allowedInstIds = memberships.map((m) => m.institutionId);
+
+    if (allowedInstIds.length === 0) {
+      throw new HttpError(403, "Nu faci parte din nicio instituție.");
+    }
+    if (targetInstitutionId && !allowedInstIds.includes(targetInstitutionId)) {
+      throw new HttpError(403, "Nu ai acces la datele acestei instituții.");
+    }
+    if (!targetInstitutionId) {
+      targetInstitutionId = allowedInstIds[0];
+    }
+  }
+
   const data = await calculateRecurringZones({
     months,
     cellMeters,
     minCount,
     limit,
     refLat,
+    institutionId: targetInstitutionId,
   });
 
   res.json(data);

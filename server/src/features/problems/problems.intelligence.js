@@ -137,6 +137,7 @@ export async function calculateRecurringZones({
   minCount = 3,
   limit = 50,
   refLat = 47,
+  institutionId = null,
 }) {
   const since = new Date(Date.now() - months * 30 * 24 * 60 * 60 * 1000);
 
@@ -145,6 +146,7 @@ export async function calculateRecurringZones({
       createdAt: { gte: since },
       duplicateOfId: null,
       status: { not: "DUPLICATE" },
+      ...(institutionId ? { department: { institutionId } } : {}),
     },
     select: {
       id: true,
@@ -218,3 +220,57 @@ export async function calculateRecurringZones({
     zones: zones.slice(0, limit),
   };
 }
+
+/**
+ * Recalculează periodic scorul de prioritate pentru toate sesizările active deschise.
+ */
+export async function recalculateOpenReportsPriorities() {
+  const openReports = await prisma.report.findMany({
+    where: {
+      status: { notIn: ["RESOLVED", "REJECTED", "DUPLICATE"] },
+    },
+    select: {
+      id: true,
+      createdAt: true,
+      supportCount: true,
+      priorityScore: true,
+      priority: true,
+      category: { select: { slug: true } },
+    },
+  });
+
+  let updatedCount = 0;
+  for (const report of openReports) {
+    const { priorityScore, priority } = calculatePriorityScore({
+      supportCount: report.supportCount,
+      createdAt: report.createdAt,
+      categorySlug: report.category?.slug,
+    });
+
+    if (report.priorityScore !== priorityScore || report.priority !== priority) {
+      await prisma.report.update({
+        where: { id: report.id },
+        data: { priorityScore, priority },
+      });
+      updatedCount++;
+    }
+  }
+
+  return { totalChecked: openReports.length, updated: updatedCount };
+}
+
+/**
+ * Inițializează jobul orar de recalculare prioritate.
+ */
+export function startPriorityRecalculationJob(intervalMs = 60 * 60 * 1000) {
+  const timer = setInterval(async () => {
+    try {
+      await recalculateOpenReportsPriorities();
+    } catch (err) {
+      console.error("[CRON] Priority recalculation error:", err);
+    }
+  }, intervalMs);
+  timer.unref();
+  return timer;
+}
+

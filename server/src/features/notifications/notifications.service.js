@@ -1,6 +1,6 @@
 import { prisma } from "../../config/database.js";
 import { HttpError } from "../../common/utils/httpError.js";
-import { sendEmail } from "../../common/utils/email.js";
+import { sendEmail, escapeHtml } from "../../common/utils/email.js";
 
 export async function createNotification({
   userId,
@@ -31,9 +31,9 @@ export async function createNotification({
         to: user.email,
         subject: `[UrbanPulse] ${title}`,
         html: `
-          <h3>Salut, ${user.name}</h3>
-          <p>${message}</p>
-          ${link ? `<p><a href="${process.env.CLIENT_URL || "http://localhost:5173"}${link}">Vezi detalii în aplicație</a></p>` : ""}
+          <h3>Salut, ${escapeHtml(user.name || "Cetățean")}</h3>
+          <p>${escapeHtml(message)}</p>
+          ${link ? `<p><a href="${process.env.CLIENT_URL || "http://localhost:5173"}${escapeHtml(link)}">Vezi detalii în aplicație</a></p>` : ""}
         `,
       }).catch(() => null);
     }

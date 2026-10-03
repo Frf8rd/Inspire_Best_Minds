@@ -12,6 +12,16 @@ const FROM_ADDRESS =
   process.env.RESEND_FROM ||
   `${BRAND_NAME} <${process.env.RESEND_FROM_ADDRESS || "onboarding@resend.dev"}>`;
 
+export function escapeHtml(unsafe) {
+  if (typeof unsafe !== "string") return unsafe ?? "";
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export const sendEmail = async ({ to, subject, html, text }) => {
   if (!isResendEnabled()) {
     console.log(
@@ -83,7 +93,7 @@ export const sendPasswordResetEmail = async (user, resetToken) => {
     title: "Resetare parolă cont",
     eyebrow: "Cerere de resetare a parolei",
     body: `
-      <p>Salut <strong>${user.name || "Utilizator"}</strong>,</p>
+      <p>Salut <strong>${escapeHtml(user.name || "Utilizator")}</strong>,</p>
       <p>Am primit o solicitare de resetare a parolei pentru contul tău. Apasă butonul de mai jos pentru a alege o nouă parolă.</p>
       <p>Acest link este valabil timp de <strong>10 minute</strong>. Dacă nu ai solicitat resetarea, poți ignora acest mesaj.</p>
     `,

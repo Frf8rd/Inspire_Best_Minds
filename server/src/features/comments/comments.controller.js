@@ -46,8 +46,8 @@ export const listCommentsController = handle(async (req, res) => {
 });
 
 export const deleteCommentController = handle(async (req, res) => {
-  const reportId = req.params.id || req.params.problemId;
   const commentId = req.params.commentId || req.params.id;
+  const reportId = req.params.commentId ? req.params.id : null;
 
   await service.deleteComment({
     reportId,

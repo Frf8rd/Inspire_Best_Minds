@@ -265,6 +265,7 @@ export async function updateReport({ reportId, actor, data }) {
   await assertReportOwnerOrAdmin(reportId, actor);
 
   let departmentId;
+  let priorityData = {};
   if (data.categoryId) {
     const category = await prisma.category.findUnique({ where: { id: data.categoryId } });
     if (!category || !category.isActive) throw new HttpError(400, "Categoria nu există.");
@@ -274,11 +275,28 @@ export async function updateReport({ reportId, actor, data }) {
       select: { departmentId: true },
     });
     departmentId = rule?.departmentId ?? null;
+
+    const current = await prisma.report.findUnique({
+      where: { id: reportId },
+      select: { supportCount: true, createdAt: true },
+    });
+    if (current) {
+      const p = calculatePriorityScore({
+        supportCount: current.supportCount,
+        createdAt: current.createdAt,
+        categorySlug: category.slug,
+      });
+      priorityData = { priorityScore: p.priorityScore, priority: p.priority };
+    }
   }
 
   const updated = await prisma.report.update({
     where: { id: reportId },
-    data: { ...data, ...(data.categoryId ? { departmentId, assigneeId: null } : {}) },
+    data: {
+      ...data,
+      ...priorityData,
+      ...(data.categoryId ? { departmentId, assigneeId: null } : {}),
+    },
     select: listSelect,
   });
   return withCode(updated);
@@ -286,11 +304,96 @@ export async function updateReport({ reportId, actor, data }) {
 
 export async function deleteReport({ reportId, actor }) {
   await assertReportOwnerOrAdmin(reportId, actor);
+
+  const report = await prisma.report.findUnique({
+    where: { id: reportId },
+    select: {
+      id: true,
+      duplicateOfId: true,
+      duplicates: {
+        select: {
+          id: true,
+          supportCount: true,
+          createdAt: true,
+          category: { select: { slug: true } },
+        },
+      },
+    },
+  });
+
+  if (!report) throw new HttpError(404, "Sesizarea nu există.");
+
   const photos = await prisma.photo.findMany({
     where: { reportId },
     select: { originalPath: true },
   });
-  await prisma.report.delete({ where: { id: reportId } });
+
+  await prisma.$transaction(async (tx) => {
+    // 1. Dacă sesizarea ștearsă este un duplicat, scădem supportCount-ul sesizării principale și îi recalculăm prioritatea
+    if (report.duplicateOfId) {
+      const parent = await tx.report.findUnique({
+        where: { id: report.duplicateOfId },
+        select: {
+          id: true,
+          supportCount: true,
+          createdAt: true,
+          category: { select: { slug: true } },
+        },
+      });
+
+      if (parent) {
+        const newSupport = Math.max(0, parent.supportCount - 1);
+        const { priorityScore, priority } = calculatePriorityScore({
+          supportCount: newSupport,
+          createdAt: parent.createdAt,
+          categorySlug: parent.category?.slug,
+        });
+
+        await tx.report.update({
+          where: { id: parent.id },
+          data: {
+            supportCount: newSupport,
+            priorityScore,
+            priority,
+          },
+        });
+      }
+    }
+
+    // 2. Dacă sesizarea ștearsă este principală și are duplicate, reactivăm duplicatele ca independente
+    if (report.duplicates && report.duplicates.length > 0) {
+      for (const child of report.duplicates) {
+        const childPriority = calculatePriorityScore({
+          supportCount: child.supportCount,
+          createdAt: child.createdAt,
+          categorySlug: child.category?.slug,
+        });
+
+        await tx.report.update({
+          where: { id: child.id },
+          data: {
+            duplicateOfId: null,
+            status: "NEW",
+            priorityScore: childPriority.priorityScore,
+            priority: childPriority.priority,
+          },
+        });
+
+        await tx.statusHistory.create({
+          data: {
+            reportId: child.id,
+            fromStatus: "DUPLICATE",
+            toStatus: "NEW",
+            authorId: actor.id,
+            comment: "Sesizarea principală a fost ștearsă; sesizarea a fost reactivată din starea de duplicat în starea NOU.",
+          },
+        });
+      }
+    }
+
+    await tx.report.delete({ where: { id: reportId } });
+  });
+
   await removeStoredPhotos(photos);
 }
 
@@ -461,7 +564,15 @@ export async function toggleSupport({ reportId, userId }) {
 export async function confirmResolution({ reportId, actor, confirmed, comment }) {
   const report = await prisma.report.findUnique({
     where: { id: reportId },
-    select: { id: true, status: true },
+    select: {
+      id: true,
+      status: true,
+      reporterId: true,
+      categoryId: true,
+      createdAt: true,
+      supportCount: true,
+      category: { select: { slug: true } },
+    },
   });
 
   if (!report) throw new HttpError(404, "Sesizarea nu există.");
@@ -473,6 +584,25 @@ export async function confirmResolution({ reportId, actor, confirmed, comment })
     );
   }
 
+  // Verificare permisiune: doar autorul, susținătorii (+1) sau administratorii
+  if (actor.role !== "ADMIN" && report.reporterId !== actor.id) {
+    const isSupporter = await prisma.reportConfirmation.findUnique({
+      where: {
+        reportId_userId_type: {
+          reportId,
+          userId: actor.id,
+          type: "SUPPORT",
+        },
+      },
+    });
+    if (!isSupporter) {
+      throw new HttpError(
+        403,
+        "Doar autorul sesizării sau cetățenii care au susținut-o pot confirma sau infirma rezolvarea."
+      );
+    }
+  }
+
   const toStatus = confirmed ? "RESOLVED" : "REOPENED";
   const confType = confirmed ? "RESOLVED_YES" : "RESOLVED_NO";
   const defaultComment = confirmed
@@ -480,6 +610,15 @@ export async function confirmResolution({ reportId, actor, confirmed, comment })
     : "Cetățeanul a infirmat rezolvarea; sesizarea a fost redeschisă.";
 
   const now = new Date();
+
+  // Dacă sesizarea e redeschisă, recalculăm prioritatea; dacă e confirmată rezolvată, prioritatea devine LOW / scor 0
+  const priorityData = confirmed
+    ? { priorityScore: 0, priority: "LOW" }
+    : calculatePriorityScore({
+        supportCount: report.supportCount,
+        createdAt: report.createdAt,
+        categorySlug: report.category?.slug,
+      });
 
   const updated = await prisma.$transaction(async (tx) => {
     // Șterge voturile anterioare de rezolvare ale utilizatorului pe această sesizare
@@ -505,6 +644,8 @@ export async function confirmResolution({ reportId, actor, confirmed, comment })
       where: { id: reportId },
       data: {
         status: toStatus,
+        priorityScore: priorityData.priorityScore,
+        priority: priorityData.priority,
         ...(confirmed ? { resolutionConfirmedAt: now } : {}),
       },
       select: listSelect,
@@ -535,7 +676,10 @@ export async function confirmResolution({ reportId, actor, confirmed, comment })
 export async function changeStatus({ reportId, actor, toStatus, comment, assigneeId }) {
   const report = await prisma.report.findUnique({
     where: { id: reportId },
-    include: { department: { select: { institutionId: true } } },
+    include: {
+      department: { select: { institutionId: true } },
+      category: { select: { slug: true } },
+    },
   });
   if (!report) throw new HttpError(404, "Sesizarea nu există.");
 
@@ -571,11 +715,26 @@ export async function changeStatus({ reportId, actor, toStatus, comment, assigne
   }
 
   const now = new Date();
+
+  // Recalculare prioritate la schimbarea de status
+  let priorityData = {};
+  if (toStatus === "RESOLVED" || toStatus === "REJECTED") {
+    priorityData = { priorityScore: 0, priority: "LOW" };
+  } else {
+    const p = calculatePriorityScore({
+      supportCount: report.supportCount,
+      createdAt: report.createdAt,
+      categorySlug: report.category?.slug,
+    });
+    priorityData = { priorityScore: p.priorityScore, priority: p.priority };
+  }
+
   const updated = await prisma.$transaction(async (tx) => {
     const r = await tx.report.update({
       where: { id: reportId },
       data: {
         status: toStatus,
+        ...priorityData,
         ...(assigneeId ? { assigneeId } : {}),
         ...(report.firstResponseAt ? {} : { firstResponseAt: now }),
         ...(toStatus === "RESOLVED_PENDING_CONFIRMATION" ? { resolvedAt: now } : {}),

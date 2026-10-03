@@ -232,9 +232,10 @@ export async function addOrUpdateMember(institutionId, { userId, email, departme
   await assertCanManageInstitution(actor, institutionId);
 
   let targetUserId = userId;
-  if (!targetUserId && email) {
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) throw new HttpError(404, `Utilizatorul cu emailul ${email} nu există.`);
+  const normalizedEmail = typeof email === "string" ? email.toLowerCase().trim() : null;
+  if (!targetUserId && normalizedEmail) {
+    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (!user) throw new HttpError(404, `Utilizatorul cu emailul ${normalizedEmail} nu există.`);
     targetUserId = user.id;
   }
   if (!targetUserId) throw new HttpError(400, "userId sau email este obligatoriu.");
