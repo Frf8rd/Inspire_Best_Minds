@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="site-footer__main">
         <div className="site-footer__about">
           <Link className="site-footer__brand" to="/" aria-label="Inspire Best Minds home">
-            <span className="site-footer__mark">IB</span>
+            <span className="site-footer__mark">SMK</span>
             <span>Inspire Best Minds</span>
           </Link>
           <p>Community-powered issue tracking for the city of Chișinău.</p>

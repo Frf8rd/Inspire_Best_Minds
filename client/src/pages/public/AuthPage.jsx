@@ -47,7 +47,7 @@ export default function AuthPage() {
         <div className="auth-divider"><span>or</span></div>
 
         <form className="form" onSubmit={submit}>
-          {mode === 'register' && <label className="field">Full name<input required value={f.name} onChange={set('name')} /></label>}
+          {mode === 'register' && <label className="field">Full name<input required maxLength={10} value={f.name} onChange={set('name')} /></label>}
           <label className="field">Email<input type="email" required value={f.email} onChange={set('email')} /></label>
           <label className="field">Password<input type="password" required value={f.password} onChange={set('password')} /></label>
           {err && <div className="error">{err}</div>}

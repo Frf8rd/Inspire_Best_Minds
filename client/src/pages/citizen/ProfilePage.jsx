@@ -160,27 +160,15 @@ export default function ProfilePage() {
   const verificationLabel = user.verificationStatus === 'verified' ? 'Verified account' : user.verificationStatus === 'pending' ? 'Verification pending' : 'Unverified account'
 
   return (
-    <div className="page profile-page">
-      <header className="profile-hero card">
-        <div className="profile-hero__identity">
-          <button type="button" className="profile-avatar-trigger profile-avatar-wrap profile-avatar-wrap--large" aria-label="Change profile photo" title="Change profile photo" onClick={() => { setPhotoDraft(user.photo || ''); setPhotoError(''); setPhotoDialog(true) }}>
-            {user.photo ? <img className="profile-photo profile-photo--large" src={user.photo} alt="Profile" /> : <div className="avatar avatar--large">{(user.name || 'U').charAt(0).toUpperCase()}</div>}
-            <span className="profile-avatar-trigger__overlay" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 5 4 4M4 20l4.5-1 11-11a2.1 2.1 0 0 0-3-3l-11 11L4 20Z" />
-              </svg>
-            </span>
-          </button>
-          <div>
-            <p className="eyebrow">Account</p>
-            <h1>{user.name}</h1>
-            <p className="muted">Member since {fmtDate(user.createdAt)}</p>
-          </div>
-        </div>
-
-        <div className="profile-hero__actions">
-          <span className="profile-badge">{verificationLabel}</span>
-          <button type="button" className="btn btn-brand" onClick={() => { setIsEditing(true); setSaved(false); setErr('') }}>Edit profile</button>
+    <div className="page">
+      <h1>My profile</h1>
+      <div className="profile-grid">
+        <form className="card form" onSubmit={save}>
+          <div className="avatar">{user.name[0]}</div>
+          <label className="field">Name<input required value={name} onChange={(e) => { setName(e.target.value); setSaved(false) }} /></label>
+          <label className="field">Email<input value={user.email} disabled /></label>
+          <p className="muted">Role: <strong>{user.role}</strong> · Member since {fmtDate(user.createdAt)}</p>
+          <button className="btn btn-primary">{saved ? 'Saved ✓' : 'Save changes'}</button>
           <button type="button" className="btn" onClick={() => { logout(); nav('/') }}>Log out</button>
         </div>
       </header>

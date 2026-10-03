@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useCases } from '../../hooks/useCases'
-import CaseCard from '../../components/CaseCard'
-import { CATEGORIES } from '../../utils/constants'
+import StatusBadge from '../../components/StatusBadge'
+import { fmtRelativeTime } from '../../utils/format'
 import './HomePage.css'
 
 const CHISINAU_IMAGES = [
@@ -41,10 +41,20 @@ const CHISINAU_IMAGES = [
   },
 ]
 
+const CATEGORY_LABELS_RO = {
+  pothole: 'Groapă',
+  lighting: 'Iluminat stradal',
+  parking: 'Parcare neregulamentară',
+  trash: 'Deșeuri',
+  sidewalk: 'Trotuar',
+  other: 'Altele',
+}
+
 export default function HomePage() {
   const { cases } = useCases()
   const navigate = useNavigate()
   const [activeSlide, setActiveSlide] = useState(0)
+  const [now, setNow] = useState(Date.now)
   const activeSlideIndex = activeSlide % CHISINAU_IMAGES.length
   const activeImage = CHISINAU_IMAGES[activeSlideIndex]
   useEffect(() => {
@@ -56,31 +66,19 @@ export default function HomePage() {
 
     return () => window.clearInterval(intervalId)
   }, [])
-  const openCases = cases.filter((caseItem) => caseItem.status === 'new' || caseItem.status === 'in_progress').length
-  const resolvedCases = cases.filter((caseItem) => caseItem.status === 'resolved').length
-  const confirmations = cases.reduce((total, caseItem) => total + caseItem.votes.length, 0)
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(Date.now()), 60_000)
+    return () => window.clearInterval(intervalId)
+  }, [])
+  const latestCases = [...cases]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 3)
   const stats = [
-    { label: 'Community reports', value: cases.length, detail: 'shared with the city' },
-    { label: 'Being addressed', value: openCases, detail: 'awaiting a resolution' },
-    { label: 'Resolved', value: resolvedCases, detail: 'closed by the community' },
-    { label: 'Neighbor confirmations', value: confirmations, detail: 'voices behind these cases' },
+    { label: 'Raportări comunitare', value: cases.length, detail: 'înregistrate în oraș' },
+    { label: 'Rezolvate', value: cases.filter((caseItem) => caseItem.status === 'resolved').length, detail: 'probleme soluționate' },
+    { label: 'În lucru', value: cases.filter((caseItem) => caseItem.status === 'in_progress').length, detail: 'în curs de rezolvare' },
+    { label: 'Confirmări', value: cases.reduce((total, caseItem) => total + caseItem.votes.length, 0), detail: 'de la locuitori' },
   ]
-  const latestCases = cases.slice(0, 4)
-  const openMapCase = (id) => navigate(`/map?case=${encodeURIComponent(id)}`)
-  const categoryDetails = {
-    pothole: 'Road damage and hazards',
-    lighting: 'Street lights and visibility',
-    parking: 'Blocked sidewalks and crossings',
-    trash: 'Dumping and overflowing bins',
-    sidewalk: 'Walking routes and surfaces',
-    other: 'Other neighborhood concerns',
-  }
-  const categoryCounts = Object.entries(CATEGORIES).map(([key, label]) => ({
-    key,
-    label,
-    detail: categoryDetails[key],
-    count: cases.filter((caseItem) => caseItem.category === key).length,
-  }))
 
   return (
     <div className="page home-page">
@@ -98,8 +96,18 @@ export default function HomePage() {
           <h1>Small actions.<br />A better city.</h1>
         </div>
       </section>
-
-      <section aria-label="Community activity" className="home-page__stats">
+      <section aria-labelledby="home-intro-heading" className="home-page__intro">
+        <span aria-hidden="true" className="home-page__intro-mark">SMK</span>
+        <div>
+          <p className="home-page__eyebrow">O comunitate. Un oraș mai bun.</p>
+          <h2 id="home-intro-heading">Spune ce nu funcționează. Împreună, facem Chișinăul mai bun.</h2>
+          <p className="home-page__intro-copy">
+            Raportează probleme din cartierul tău — gropi, iluminat stradal defect, gunoi,
+            trotuare deteriorate sau parcări neregulamentare — și urmărește progresul rezolvării lor.
+          </p>
+        </div>
+      </section>
+      <section aria-label="Statistici comunitare" className="home-page__stats">
         {stats.map((stat) => (
           <div className="home-page__stat" key={stat.label}>
             <strong>{stat.value}</strong>
@@ -108,85 +116,59 @@ export default function HomePage() {
           </div>
         ))}
       </section>
-
-      <section className="home-page__workflow">
-        <div className="home-page__section-heading">
+      <section aria-labelledby="latest-reports-heading" className="home-page__latest-reports">
+        <div className="home-page__latest-heading">
           <div>
-            <p className="home-page__eyebrow">A simple local process</p>
-            <h2>From what you notice to visible progress</h2>
+            <p className="home-page__eyebrow"><span /> Comunitate</p>
+            <h2 id="latest-reports-heading">Ultimele raportări</h2>
           </div>
-          <Link className="home-page__text-link" to="/report">Start a report <span aria-hidden="true">→</span></Link>
-        </div>
-        <ol className="home-page__workflow-list">
-          <li className="home-page__workflow-step">
-            <span className="home-page__step-number">01</span>
-            <div>
-              <h3>Show the issue</h3>
-              <p>Add a short description, choose a category, and mark the location.</p>
-            </div>
-          </li>
-          <li className="home-page__workflow-step">
-            <span className="home-page__step-number">02</span>
-            <div>
-              <h3>Build the shared picture</h3>
-              <p>Neighbors can confirm a case that affects their area too.</p>
-            </div>
-          </li>
-          <li className="home-page__workflow-step">
-            <span className="home-page__step-number">03</span>
-            <div>
-              <h3>Follow its status</h3>
-              <p>Check whether a case is new, in progress, or resolved.</p>
-            </div>
-          </li>
-        </ol>
-      </section>
-
-      <section className="home-page__categories">
-        <div className="home-page__section-heading">
-          <div>
-            <p className="home-page__eyebrow">Everyday city issues</p>
-            <h2>What needs attention near you?</h2>
-          </div>
-          <Link className="home-page__text-link" to="/map">Browse cases <span aria-hidden="true">→</span></Link>
-        </div>
-        <div className="home-page__category-list">
-          {categoryCounts.map((category) => (
-            <Link className="home-page__category" key={category.key} to="/map">
-              <span className="home-page__category-copy">
-                <strong>{category.label}</strong>
-                <small>{category.detail}</small>
-              </span>
-              <span className="home-page__category-count">{category.count}</span>
-              <span aria-hidden="true" className="home-page__category-arrow">↗</span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="home-page__latest">
-        <div className="home-page__section-heading">
-          <div>
-            <p className="home-page__eyebrow">From the neighborhood</p>
-            <h2>Recent reports</h2>
-          </div>
-          <Link className="home-page__text-link" to="/map">View all <span aria-hidden="true">→</span></Link>
+          <button className="home-page__all-reports" onClick={() => navigate('/map')}>Vezi toate <span aria-hidden="true">→</span></button>
         </div>
         {latestCases.length ? (
-          <div className="home-page__reports">
+          <div className="home-page__report-cards">
             {latestCases.map((caseItem) => (
-              <CaseCard key={caseItem.id} c={caseItem} onClick={() => openMapCase(caseItem.id)} />
+              <button
+                aria-label={`Deschide raportarea: ${caseItem.title}`}
+                className="home-page__report-card"
+                key={caseItem.id}
+                onClick={() => navigate(`/map?case=${encodeURIComponent(caseItem.id)}`)}
+              >
+                {caseItem.photo ? (
+                  <img alt="" className="home-page__report-photo" src={caseItem.photo} />
+                ) : (
+                  <div aria-label="Nu a fost atașată o fotografie" className="home-page__report-photo home-page__report-photo--empty" role="img">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                      <rect x="3" y="4" width="18" height="16" rx="3" />
+                      <circle cx="8.5" cy="9" r="1.5" />
+                      <path d="m21 15-5-5L5 20" />
+                    </svg>
+                    <span>Fără fotografie</span>
+                  </div>
+                )}
+                <div className="home-page__report-content">
+                  <span className="home-page__report-category">{CATEGORY_LABELS_RO[caseItem.category] || CATEGORY_LABELS_RO.other}</span>
+                  <h3>{caseItem.title}</h3>
+                  <div className="home-page__report-meta">
+                    {caseItem.status === 'new' ? (
+                      <time className="home-page__report-age" dateTime={caseItem.createdAt}>
+                        {fmtRelativeTime(caseItem.createdAt, now)}
+                      </time>
+                    ) : <StatusBadge status={caseItem.status} />}
+                    <span className="home-page__confirmations">
+                      <svg aria-hidden="true" viewBox="0 0 24 24" fill="none">
+                        <path d="M7 10v11H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3Zm0 0 5-8a3 3 0 0 1 2 4l-1 4h6a3 3 0 0 1 3 4l-1.5 6a3 3 0 0 1-3 2H7" />
+                      </svg>
+                      {caseItem.votes.length} confirmări
+                    </span>
+                  </div>
+                </div>
+              </button>
             ))}
           </div>
         ) : (
-          <div className="home-page__empty-state">
-            <p>No reports yet. Be the first to flag an issue in your neighborhood.</p>
-            <Link className="home-page__text-link" to="/report">Create the first report <span aria-hidden="true">→</span></Link>
-          </div>
+          <p className="home-page__reports-empty">Nu există raportări încă.</p>
         )}
       </section>
-
-      <p className="home-page__footnote">Sample reports are simulated while the platform is in development.</p>
     </div>
   )
 }

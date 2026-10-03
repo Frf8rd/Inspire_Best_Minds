@@ -17,6 +17,8 @@ export function initStore() {
 const startSession = (u) => { write(K.session, u.id); return strip(u) }
 export function register({ name, email, password }) {
   const users = read(K.users, [])
+  name = name.trim()
+  if (!name || name.length > 10) throw new Error('Name must be 10 characters or fewer.')
   email = email.trim().toLowerCase()
   if (users.some((u) => u.email === email)) throw new Error('This email is already registered.')
   const u = {
