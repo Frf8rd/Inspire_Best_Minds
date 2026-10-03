@@ -1,0 +1,13 @@
+:root {
+  --color-primary: #183b36;
+  --color-accent: #e5ae55;
+  --color-surface: #ffffff;
+  --color-background: #f3f4f6;
+  --color-text: #111827;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+}
