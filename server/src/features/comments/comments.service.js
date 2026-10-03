@@ -1,5 +1,6 @@
 import { prisma } from "../../config/database.js";
 import { HttpError } from "../../common/utils/httpError.js";
+import { createNotification } from "../notifications/notifications.service.js";
 
 /**
  * Verifică dacă utilizatorul curent are dreptul de a citi/scrie comentarii interne.
@@ -27,6 +28,7 @@ export async function addComment({ reportId, actor, body, visibility = "PUBLIC" 
     where: { id: reportId },
     select: {
       id: true,
+      reporterId: true,
       department: { select: { institutionId: true } },
     },
   });
@@ -73,6 +75,17 @@ export async function addComment({ reportId, actor, body, visibility = "PUBLIC" 
       },
     },
   });
+
+  // Notificare către autorul sesizării dacă altcineva a adăugat un comentariu
+  if (report.reporterId && report.reporterId !== actor.id && finalVisibility === "PUBLIC") {
+    createNotification({
+      userId: report.reporterId,
+      title: "Comentariu nou la sesizarea ta",
+      message: `${comment.author.name} a adăugat un comentariu.`,
+      type: "COMMENT",
+      link: `/problems/${reportId}`,
+    }).catch(() => null);
+  }
 
   return comment;
 }

@@ -9,6 +9,7 @@ import analyticsRoutes from "./features/analytics/analytics.routes.js";
 import institutionsRoutes from "./features/institutions/institutions.routes.js";
 import complaintsRoutes from "./features/complaints/complaints.routes.js";
 import adminUsersRoutes from "./features/users/users.routes.js";
+import notificationsRoutes from "./features/notifications/notifications.routes.js";
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.use("/institutions", institutionsRoutes);
 router.use("/complaints", complaintsRoutes);
 router.use("/analytics", analyticsRoutes);
 router.use("/admin/users", adminUsersRoutes);
+router.use("/notifications", notificationsRoutes);
 router.delete("/comments/:id", protect, deleteCommentController);
 
 router.get("/health", (req, res) => {

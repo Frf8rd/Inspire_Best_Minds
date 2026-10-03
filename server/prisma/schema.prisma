@@ -132,6 +132,7 @@ model User {
   comments        Comment[]
   confirmations   ReportConfirmation[]
   refreshTokens   RefreshToken[]
+  notifications   Notification[]
 }
 
 model RefreshToken {
@@ -375,4 +376,32 @@ model Complaint {
 
   @@index([status, dueAt]) // pentru jobul care caută sesizările expirate
   @@index([reportId])
+}
+
+// ============================================================
+// NOTIFICĂRI
+// ============================================================
+
+enum NotificationType {
+  STATUS_CHANGE
+  COMMENT
+  ASSIGNMENT
+  COMPLAINT
+  SYSTEM
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      NotificationType @default(SYSTEM)
+  link      String?          // e.g. "/problems/cmus..."
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
 }

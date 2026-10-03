@@ -9,6 +9,7 @@ import {
   findNearbyOpenDuplicate,
   calculatePriorityScore,
 } from "./problems.intelligence.js";
+import { createNotification } from "../notifications/notifications.service.js";
 
 const withCode = (report) => {
   if (!report) return report;
@@ -595,5 +596,30 @@ export async function changeStatus({ reportId, actor, toStatus, comment, assigne
     return r;
   });
 
-  return withCode(updated);
+  const formatted = withCode(updated);
+
+  // Notificare automată către autorul sesizării
+  if (report.reporterId && report.reporterId !== actor.id) {
+    createNotification({
+      userId: report.reporterId,
+      title: `Actualizare status ${formatted.code}`,
+      message: `Sesizarea ta a trecut în starea "${toStatus}".`,
+      type: "STATUS_CHANGE",
+      link: `/problems/${reportId}`,
+      sendEmailNotification: true,
+    }).catch(() => null);
+  }
+
+  // Notificare către responsabil dacă a fost atribuit
+  if (assigneeId && assigneeId !== actor.id) {
+    createNotification({
+      userId: assigneeId,
+      title: `Nouă sarcină alocată: ${formatted.code}`,
+      message: `Ți-a fost repartizată sesizarea: „${report.title}”.`,
+      type: "ASSIGNMENT",
+      link: `/problems/${reportId}`,
+    }).catch(() => null);
+  }
+
+  return formatted;
 }

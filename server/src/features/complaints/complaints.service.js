@@ -2,6 +2,7 @@ import { prisma } from "../../config/database.js";
 import { HttpError } from "../../common/utils/httpError.js";
 import { sendEmail } from "../../common/utils/email.js";
 import { formatReportCode } from "../problems/problems.constants.js";
+import { createNotification } from "../notifications/notifications.service.js";
 
 export async function generateReferenceNumber() {
   const year = new Date().getFullYear();
@@ -241,7 +242,7 @@ export async function answerComplaint({ complaintId, actor, answerText }) {
     where: { id: complaintId },
     include: {
       institution: { select: { id: true, name: true } },
-      report: { select: { id: true, number: true, status: true } },
+      report: { select: { id: true, number: true, status: true, reporterId: true } },
     },
   });
 
@@ -300,6 +301,19 @@ export async function answerComplaint({ complaintId, actor, answerText }) {
 
     return updated;
   });
+
+  if (complaint.report?.reporterId) {
+    createNotification({
+      userId: complaint.report.reporterId,
+      title: `Răspuns oficial: ${complaint.referenceNumber}`,
+      message: `Instituția „${complaint.institution.name}” a transmis un răspuns oficial la sesizarea ta.`,
+      type: "COMPLAINT",
+      link: `/complaints/${complaintId}`,
+      sendEmailNotification: true,
+    }).catch(() => null);
+  }
+
+  return updated;
 }
 
 export async function acknowledgeComplaint({ complaintId, actor }) {
