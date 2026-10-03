@@ -1,15 +1,29 @@
-.blank-page {
-  min-height: 100vh;
+.role-login-bar {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #ffffff;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(17, 24, 39, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(8px);
 }
 
-.placeholder-text {
-  margin: 0;
-  font-size: 1rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #6b7280;
+.role-login-bar button {
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f9fafb;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.role-login-bar button:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
