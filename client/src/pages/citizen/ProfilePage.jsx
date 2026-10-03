@@ -160,18 +160,30 @@ export default function ProfilePage() {
   const verificationLabel = user.verificationStatus === 'verified' ? 'Verified account' : user.verificationStatus === 'pending' ? 'Verification pending' : 'Unverified account'
 
   return (
-    <div className="page">
-      <h1>My profile</h1>
-      <div className="profile-grid">
-        <form className="card form" onSubmit={save}>
-          <div className="avatar">{user.name[0]}</div>
-          <label className="field">Name<input required value={name} onChange={(e) => { setName(e.target.value); setSaved(false) }} /></label>
-          <label className="field">Email<input value={user.email} disabled /></label>
-          <p className="muted">Role: <strong>{user.role}</strong> · Member since {fmtDate(user.createdAt)}</p>
-          <button className="btn btn-primary">{saved ? 'Saved ✓' : 'Save changes'}</button>
+    <div className="page profile-page">
+      <section className="profile-hero card">
+        <div className="profile-hero__identity">
+          <button type="button" className="avatar-button" onClick={() => setPhotoDialog(true)} aria-label="Change profile photo">
+            {user.photo ? (
+              <img src={user.photo} alt={`${user.name || 'User'} profile`} className="avatar-image" />
+            ) : (
+              <span className="avatar-fallback">{(user.name || 'U').charAt(0).toUpperCase()}</span>
+            )}
+          </button>
+
+          <div className="profile-header__info">
+            <p className="eyebrow">Account</p>
+            <h1>{user.name}</h1>
+            <p className="muted">Member since {fmtDate(user.createdAt)}</p>
+          </div>
+        </div>
+
+        <div className="profile-hero__actions">
+          <span className="profile-badge">{verificationLabel}</span>
+          <button type="button" className="btn btn-brand" onClick={() => setIsEditing(true)}>Edit profile</button>
           <button type="button" className="btn" onClick={() => { logout(); nav('/') }}>Log out</button>
         </div>
-      </header>
+      </section>
 
       <div className="profile-layout">
         <aside className="card profile-sidebar">
@@ -206,8 +218,13 @@ export default function ProfilePage() {
                 <span className="muted">Role</span>
                 <strong>{user.role}</strong>
               </div>
+              <div className="profile-summary__row">
+                <span className="muted">Member since</span>
+                <strong>{fmtDate(user.createdAt)}</strong>
+              </div>
             </div>
           )}
+
         </aside>
 
         <main className="profile-main">
