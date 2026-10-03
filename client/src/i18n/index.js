@@ -1,1 +1,0 @@
-export const supportedLocales = ['ro', 'ru', 'en']
