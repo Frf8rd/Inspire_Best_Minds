@@ -1,133 +1,374 @@
+// ============================================================
+// UrbanPulse — schema.prisma (versiune MVP, Prisma 7)
+// Bază de date: PostgreSQL
+//
+// URL-ul bazei de date NU mai e aici (Prisma 7): el stă în prisma.config.ts.
+//
+// Ce NU e inclus intenționat (se calculează din date sau vine mai târziu):
+//   reputație/scoruri  -> se calculează cu interogări din Report
+//   carduri înainte/după, dosar PDF -> se generează la cerere, fără tabel
+//   notificări, ordine de lucru, zone, duplicate, jurnal audit -> după MVP
+// ============================================================
+
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-// ── Modelul de Utilizator (cu toate câmpurile de Auth + Profil)
+// ============================================================
+// ENUMURI
+// ============================================================
+
+enum UserRole {
+  CITIZEN // cetățean
+  STAFF   // angajat al unei instituții (drepturile exacte vin din Membership)
+  ADMIN   // administrator de platformă
+}
+
+enum MembershipRole {
+  HANDLER // lucrează la tichete
+  MANAGER // gestionează echipa și profilul instituției
+}
+
+enum InstitutionType {
+  MUNICIPALITY      // primărie
+  DISTRICT_COUNCIL  // consiliu / sector
+  MUNICIPAL_SERVICE // serviciu municipal (drumuri, iluminat, salubrizare...)
+  UTILITY           // apă-canal, rețele electrice, termoficare...
+  CONTRACTOR        // firmă de reparații
+  OTHER
+}
+
+enum ProfileStatus {
+  UNCLAIMED // profil creat din datele platformei, instituția nu s-a înscris
+  CLAIMED   // instituția și-a revendicat profilul
+  VERIFIED  // identitatea instituției a fost verificată
+}
+
+enum ReportStatus {
+  NEW
+  IN_REVIEW
+  CONFIRMED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED_PENDING_CONFIRMATION // instituția a zis "rezolvat", așteaptă cetățenii
+  RESOLVED                      // confirmat de cetățeni
+  REOPENED                      // cetățenii au spus că nu e rezolvat
+  REJECTED
+  DUPLICATE
+  NEEDS_INFO
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum ReportSource {
+  WEB
+  MOBILE
+  TELEGRAM
+}
+
+enum PhotoKind {
+  REPORT // poza inițială a cetățeanului
+  BEFORE // înainte de lucrare (de la instituție)
+  AFTER  // după lucrare (de la instituție)
+}
+
+enum ConfirmationType {
+  SUPPORT      // "+1, o văd și eu"
+  RESOLVED_YES // confirm că e rezolvat
+  RESOLVED_NO  // nu e rezolvat
+}
+
+enum ComplaintStatus {
+  DRAFT
+  SENT
+  ACKNOWLEDGED
+  ANSWERED
+  OVERDUE
+  ESCALATED
+  CLOSED
+}
+
+enum DeliveryChannel {
+  EMAIL
+  PDF
+  PORTAL
+}
+
+enum CommentVisibility {
+  PUBLIC   // vizibil tuturor (include dreptul la replică al instituției)
+  INTERNAL // doar pentru echipa instituției
+}
+
+// ============================================================
+// UTILIZATORI ȘI AUTENTIFICARE
+// ============================================================
+
 model User {
-  id                       Int             @id @default(autoincrement())
-  username                 String?
-  nume                     String?
-  email                    String          @unique
-  password                 String?
-  parola                   String?
-  rol                      UserRole        @default(USER)
-  role                     String          @default("user") // "user" | "admin"
-  provider                 String          @default("local") // "local" | "google"
-  googleId                 String?
-  refreshToken             String?         // Hash-ul bcrypt al refresh token-ului
-  passwordResetToken       String?         // Hash SHA256 pentru resetare parolă
-  passwordResetExpires     DateTime?
-  emailVerificationToken   String?         // Hash SHA256 pentru confirmare email
-  emailVerificationExpires DateTime?
-  phone                    String?
-  avatar                   String?
-  dateOfBirth              DateTime?
-  gender                   String?
-  isActive                 Boolean         @default(true)
-  isEmailVerified          Boolean         @default(false)
-  lastLoginAt              DateTime?
-  createdAt                DateTime        @default(now())
-  updatedAt                DateTime        @default(now()) @updatedAt
-  Problem                  Problem[]
-  StatusHistory            StatusHistory[]
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  passwordHash   String   // niciodată parola în clar (bcrypt/argon2)
+  role           UserRole @default(CITIZEN)
+  phone          String?
+  telegramChatId String?  @unique // pentru botul Telegram (opțional)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  @@index([googleId])
+  reportsCreated  Report[]             @relation("ReportReporter")
+  reportsAssigned Report[]             @relation("ReportAssignee")
+  memberships     Membership[]
+  photos          Photo[]
+  statusChanges   StatusHistory[]
+  comments        Comment[]
+  confirmations   ReportConfirmation[]
+  refreshTokens   RefreshToken[]
 }
 
-// ── Modelele existente în aplicație
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique // se salvează doar hash-ul tokenului
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// ============================================================
+// INSTITUȚII ȘI RUTARE
+// ============================================================
+
+model Institution {
+  id            String          @id @default(cuid())
+  name          String
+  slug          String          @unique
+  type          InstitutionType
+  profileStatus ProfileStatus   @default(UNCLAIMED)
+  description   String?
+  contactEmail  String?
+  contactPhone  String?
+  website       String?
+
+  // termenul legal de răspuns (zile) folosit la sesizarea formală — verifică legislația
+  responseDeadlineDays Int @default(30)
+
+  // ierarhie pentru escaladare: serviciu -> primărie -> consiliu
+  parentId String?
+  parent   Institution?  @relation("InstitutionHierarchy", fields: [parentId], references: [id])
+  children Institution[] @relation("InstitutionHierarchy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  departments Department[]
+  memberships Membership[]
+  complaints  Complaint[]
+}
+
+model Department {
+  id            String      @id @default(cuid())
+  institutionId String
+  institution   Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  name          String
+  contactEmail  String?
+
+  memberships  Membership[]
+  routingRules RoutingRule[]
+  reports      Report[]
+
+  @@unique([institutionId, name])
+}
+
+model Membership {
+  id            String         @id @default(cuid())
+  userId        String
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institutionId String
+  institution   Institution    @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  departmentId  String?
+  department    Department?    @relation(fields: [departmentId], references: [id])
+  role          MembershipRole @default(HANDLER)
+  createdAt     DateTime       @default(now())
+
+  @@unique([userId, institutionId])
+}
+
 model Category {
-  id               Int               @id @default(autoincrement())
-  denumire         String
-  descriere        String?
-  serviciuId       Int?
-  MunicipalService MunicipalService? @relation(fields: [serviciuId], references: [id])
-  Problem          Problem[]
+  id          String  @id @default(cuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  isActive    Boolean @default(true)
+
+  reports      Report[]
+  routingRules RoutingRule[]
 }
 
-model MunicipalService {
-  id       Int        @id @default(autoincrement())
-  denumire String
-  contact  String?
-  Category Category[]
-  Problem  Problem[]
+// "Harta responsabilității" simplă: categorie => departament responsabil.
+// (Mai târziu poți adăuga o tabelă Zone și un zoneId aici, pentru reguli pe zone.)
+model RoutingRule {
+  id           String     @id @default(cuid())
+  categoryId   String
+  category     Category   @relation(fields: [categoryId], references: [id])
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  precedence   Int        @default(0) // regula cu număr mai mare câștigă
+
+  @@unique([categoryId, departmentId])
+}
+
+// ============================================================
+// RAPORTĂRI
+// ============================================================
+
+model Report {
+  id     String @id @default(cuid())
+  number Int    @unique @default(autoincrement()) // afișat ca #UP-0001 (formatat în aplicație)
+
+  title       String
+  description String?
+  source      ReportSource @default(WEB)
+
+  latitude  Float
+  longitude Float
+  address   String?
+
+  status        ReportStatus @default(NEW)
+  priority      Priority     @default(MEDIUM)
+  priorityScore Float        @default(0)
+  supportCount  Int          @default(0) // cache pentru numărul de "+1"
+
+  reporterId   String
+  reporter     User        @relation("ReportReporter", fields: [reporterId], references: [id])
+  categoryId   String
+  category     Category    @relation(fields: [categoryId], references: [id])
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id])
+  assigneeId   String?
+  assignee     User?       @relation("ReportAssignee", fields: [assigneeId], references: [id])
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  firstResponseAt       DateTime? // pentru "timp mediu de răspuns"
+  resolvedAt            DateTime? // când instituția a marcat rezolvat
+  resolutionConfirmedAt DateTime? // când cetățenii au confirmat
+
+  photos        Photo[]
+  history       StatusHistory[]
+  comments      Comment[]
+  confirmations ReportConfirmation[]
+  complaints    Complaint[]
+
+  @@index([status])
+  @@index([categoryId])
+  @@index([departmentId])
+  @@index([createdAt])
+  @@index([latitude, longitude]) // pentru căutări în zonă; PostGIS poate veni mai târziu
 }
 
 model Photo {
-  id         Int      @id @default(autoincrement())
-  problemaId Int
-  cale       String
-  data       DateTime @default(now())
-  Problem    Problem  @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  reportId     String
+  report       Report    @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  uploadedById String
+  uploadedBy   User      @relation(fields: [uploadedById], references: [id])
+  kind         PhotoKind @default(REPORT)
 
-  @@index([problemaId])
-}
+  originalPath   String  // privat: poza originală (cu fețe / numere vizibile)
+  publicPath     String? // varianta publică (după blur la date personale), dacă o faci
+  sha256         String  // detectare poze identice
+  perceptualHash String? // pentru poze foarte asemănătoare (opțional, mai târziu)
+  width          Int?
+  height         Int?
+  sizeBytes      Int?
+  createdAt      DateTime @default(now())
 
-model Problem {
-  id               Int               @id @default(autoincrement())
-  code             String            @unique
-  utilizatorId     Int
-  categorieId      Int
-  serviciuId       Int?
-  titlu            String
-  descriere        String
-  latitudine       Float?
-  longitudine      Float?
-  status           ProblemStatus     @default(NOUA)
-  prioritate       ProblemPriority   @default(MEDIE)
-  dataCrearii      DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  Photo            Photo[]
-  Category         Category          @relation(fields: [categorieId], references: [id])
-  MunicipalService MunicipalService? @relation(fields: [serviciuId], references: [id])
-  User             User              @relation(fields: [utilizatorId], references: [id])
-  StatusHistory    StatusHistory[]
-
-  @@index([categorieId])
-  @@index([latitudine, longitudine])
-  @@index([prioritate])
-  @@index([status])
-  @@index([utilizatorId])
+  @@index([reportId])
+  @@index([sha256])
 }
 
 model StatusHistory {
-  id           Int           @id @default(autoincrement())
-  problemaId   Int
-  status       ProblemStatus
-  comentariu   String?
-  utilizatorId Int
-  data         DateTime      @default(now())
-  Problem      Problem       @relation(fields: [problemaId], references: [id], onDelete: Cascade)
-  User         User          @relation(fields: [utilizatorId], references: [id])
+  id         String        @id @default(cuid())
+  reportId   String
+  report     Report        @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  fromStatus ReportStatus?
+  toStatus   ReportStatus
+  comment    String?
+  authorId   String?       // null = schimbare automată de sistem
+  author     User?         @relation(fields: [authorId], references: [id])
+  createdAt  DateTime      @default(now())
 
-  @@index([problemaId])
-  @@index([utilizatorId])
+  @@index([reportId, createdAt])
 }
 
-enum ProblemPriority {
-  SCZUTA
-  MEDIE
-  RIDICATA
-  CRITICA
+model Comment {
+  id         String            @id @default(cuid())
+  reportId   String
+  report     Report            @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  authorId   String
+  author     User              @relation(fields: [authorId], references: [id])
+  body       String
+  visibility CommentVisibility @default(PUBLIC)
+  createdAt  DateTime          @default(now())
+
+  @@index([reportId, createdAt])
 }
 
-enum ProblemStatus {
-  NOUA
-  IN_VERIFICARE
-  CONFIRMATA
-  REPARTIZATA
-  IN_LUCRU
-  REZOLVATA
-  RESPINSA
-  DUPLICAT
-  INFORMATII_INSUFICIENTE
+// "+1, o văd și eu" și confirmarea rezolvării de către cetățeni
+model ReportConfirmation {
+  id        String           @id @default(cuid())
+  reportId  String
+  report    Report           @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User             @relation(fields: [userId], references: [id])
+  type      ConfirmationType
+  createdAt DateTime         @default(now())
+
+  @@unique([reportId, userId, type])
+  @@index([reportId, type])
 }
 
-enum UserRole {
-  USER
-  ADMIN
-  OPERATOR
+// ============================================================
+// SESIZARE FORMALĂ CU TERMEN ȘI ESCALADARE
+// ============================================================
+
+model Complaint {
+  id            String      @id @default(cuid())
+  reportId      String
+  report        Report      @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  institutionId String      // cui i se trimite (la escaladare: instituția părinte)
+  institution   Institution @relation(fields: [institutionId], references: [id])
+
+  referenceNumber String          @unique
+  status          ComplaintStatus @default(DRAFT)
+  channel         DeliveryChannel @default(EMAIL)
+  documentPath    String?         // PDF-ul sesizării
+  sentAt          DateTime?
+  dueAt           DateTime?       // termenul de răspuns
+  answeredAt      DateTime?
+  answerText      String?
+
+  // lanț de escaladare: sesizarea nouă trimisă la nivelul superior
+  escalationLevel Int         @default(0)
+  escalatedFromId String?
+  escalatedFrom   Complaint?  @relation("ComplaintEscalation", fields: [escalatedFromId], references: [id])
+  escalations     Complaint[] @relation("ComplaintEscalation")
+
+  createdAt DateTime @default(now())
+
+  @@index([status, dueAt]) // pentru jobul care caută sesizările expirate
+  @@index([reportId])
 }
