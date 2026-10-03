@@ -1,10 +1,20 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import 'leaflet/dist/leaflet.css'
 import './styles/globals.css'
-import App from './App.jsx'
+import './styles/app.css'
+import { AuthProvider } from './context/AuthContext'
+import { initStore } from './api/store'
+import App from './App'
 
+initStore()
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
   </StrictMode>,
 )

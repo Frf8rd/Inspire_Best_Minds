@@ -1,3 +1,8 @@
+import { useCallback, useState } from 'react'
+import { getCases } from '../api/store'
+
 export function useCases() {
-  return null
+  const [cases, setCases] = useState(getCases)
+  const refresh = useCallback(() => setCases(getCases()), [])
+  return { cases, refresh }
 }
