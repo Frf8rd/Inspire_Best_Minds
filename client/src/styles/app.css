@@ -182,6 +182,7 @@ main {
 
 /* Generic layout */
 .page {
+  flex: 1;
   max-width: 1320px;
   margin: 0 auto;
   padding: 2.25rem 2rem;
