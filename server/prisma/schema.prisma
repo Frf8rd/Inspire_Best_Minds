@@ -1,11 +1,117 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  OPERATOR
+}
+
+enum ProblemStatus {
+  NOUA
+  IN_VERIFICARE
+  CONFIRMATA
+  REPARTIZATA
+  IN_LUCRU
+  REZOLVATA
+  RESPINSA
+  DUPLICAT
+  INFORMATII_INSUFICIENTE
+}
+
+enum ProblemPriority {
+  SCZUTA
+  MEDIE
+  RIDICATA
+  CRITICA
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  nume      String
+  email     String   @unique
+  parola    String
+  rol       UserRole @default(USER)
+  createdAt DateTime @default(now())
+
+  problems      Problem[]
+  statusHistory StatusHistory[]
+}
+
+model MunicipalService {
+  id       Int     @id @default(autoincrement())
+  denumire String
+  contact  String?
+
+  categories Category[]
+  problems   Problem[]
+}
+
+model Category {
+  id         Int     @id @default(autoincrement())
+  denumire   String
+  descriere  String?
+  serviciuId Int?
+
+  service  MunicipalService? @relation(fields: [serviciuId], references: [id])
+  problems Problem[]
+}
+
+model Problem {
+  id           Int             @id @default(autoincrement())
+  code         String          @unique
+  utilizatorId Int
+  categorieId  Int
+  serviciuId   Int?
+  titlu        String
+  descriere    String
+  latitudine   Float?
+  longitudine  Float?
+  status       ProblemStatus   @default(NOUA)
+  prioritate   ProblemPriority @default(MEDIE)
+  dataCrearii  DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  user          User              @relation(fields: [utilizatorId], references: [id])
+  category      Category          @relation(fields: [categorieId], references: [id])
+  service       MunicipalService? @relation(fields: [serviciuId], references: [id])
+  photos        Photo[]
+  statusHistory StatusHistory[]
+
+  @@index([categorieId])
+  @@index([status])
+  @@index([prioritate])
+  @@index([latitudine, longitudine])
+  @@index([utilizatorId])
+}
+
+model Photo {
+  id         Int      @id @default(autoincrement())
+  problemaId Int
+  cale       String
+  data       DateTime @default(now())
+
+  problem Problem @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+
+  @@index([problemaId])
+}
+
+model StatusHistory {
+  id           Int           @id @default(autoincrement())
+  problemaId   Int
+  status       ProblemStatus
+  comentariu   String?
+  utilizatorId Int
+  data         DateTime      @default(now())
+
+  problem Problem @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [utilizatorId], references: [id])
+
+  @@index([problemaId])
+  @@index([utilizatorId])
 }
