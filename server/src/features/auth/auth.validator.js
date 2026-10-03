@@ -75,3 +75,24 @@ export const resetPasswordRules = [
     .matches(/\d/)
     .withMessage("Parola trebuie să conțină cel puțin o cifră"),
 ];
+
+export const updateMeRules = [
+  body("name")
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage("Numele trebuie să conțină între 2 și 50 caractere"),
+  body("phone")
+    .optional({ nullable: true })
+    .trim(),
+];
+
+export const changePasswordRules = [
+  body("currentPassword").notEmpty().withMessage("Parola curentă este obligatorie"),
+  body("newPassword")
+    .isLength({ min: 6 })
+    .withMessage("Noua parolă trebuie să aibă cel puțin 6 caractere")
+    .matches(/\d/)
+    .withMessage("Noua parolă trebuie să conțină cel puțin o cifră"),
+];
+

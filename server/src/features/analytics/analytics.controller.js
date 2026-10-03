@@ -1,4 +1,5 @@
 import { calculateRecurringZones } from "../problems/problems.intelligence.js";
+import * as service from "./analytics.service.js";
 import { HttpError } from "../../common/utils/httpError.js";
 
 const handle = (fn) => async (req, res) => {
@@ -29,4 +30,20 @@ export const getRecurringZonesController = handle(async (req, res) => {
   });
 
   res.json(data);
+});
+
+export const getDashboardController = handle(async (req, res) => {
+  const { institutionId, startDate, endDate } = req.query;
+  const stats = await service.getDashboardStats({
+    actor: req.user,
+    institutionId,
+    startDate,
+    endDate,
+  });
+  res.json(stats);
+});
+
+export const getInstitutionTransparencyController = handle(async (req, res) => {
+  const report = await service.getInstitutionTransparency(req.params.idOrSlug);
+  res.json(report);
 });

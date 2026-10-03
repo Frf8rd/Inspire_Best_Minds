@@ -7,6 +7,8 @@ import { protect } from "./common/middleware/auth.middleware.js";
 import { deleteCommentController } from "./features/comments/comments.controller.js";
 import analyticsRoutes from "./features/analytics/analytics.routes.js";
 import institutionsRoutes from "./features/institutions/institutions.routes.js";
+import complaintsRoutes from "./features/complaints/complaints.routes.js";
+import adminUsersRoutes from "./features/users/users.routes.js";
 
 const router = express.Router();
 
@@ -14,7 +16,9 @@ router.use("/auth", authRoutes);
 router.get("/me/problems", protect, listMyProblemsController);
 router.use("/problems", problemsRoutes);
 router.use("/institutions", institutionsRoutes);
+router.use("/complaints", complaintsRoutes);
 router.use("/analytics", analyticsRoutes);
+router.use("/admin/users", adminUsersRoutes);
 router.delete("/comments/:id", protect, deleteCommentController);
 
 router.get("/health", (req, res) => {

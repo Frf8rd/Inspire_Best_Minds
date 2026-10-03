@@ -17,6 +17,10 @@ import {
   createCommentController,
   deleteCommentController,
 } from "../comments/comments.controller.js";
+import {
+  listComplaintsController,
+  createComplaintController,
+} from "../complaints/complaints.controller.js";
 import { uploadProblemPhotos } from "./problems.upload.js";
 
 const router = Router();
@@ -38,5 +42,9 @@ router.post("/:id/confirm-resolution", confirmResolutionController);
 router.get("/:id/comments", listCommentsController);
 router.post("/:id/comments", createCommentController);
 router.delete("/:id/comments/:commentId", deleteCommentController);
+
+// Sesizări formale (Complaints) legate de problemă
+router.get("/:id/complaints", listComplaintsController);
+router.post("/:id/complaints", createComplaintController);
 
 export default router;

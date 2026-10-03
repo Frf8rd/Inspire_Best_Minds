@@ -318,3 +318,77 @@ export const resetPassword = async (req, res) => {
 // Folosit de passport.js pentru conturi create prin Google (nu au parolă locală).
 export const randomPasswordHash = () =>
   bcrypt.hash(crypto.randomBytes(32).toString("hex"), 10);
+
+export const updateMe = async (req, res) => {
+  try {
+    const updateData = {};
+    if (req.body.name !== undefined || req.body.username !== undefined) {
+      const name = String(req.body.name || req.body.username || "").trim();
+      if (name.length < 2 || name.length > 50) {
+        return res.status(400).json({ message: "Numele trebuie să aibă între 2 și 50 caractere." });
+      }
+      updateData.name = name;
+    }
+    if (req.body.phone !== undefined) {
+      updateData.phone = req.body.phone ? String(req.body.phone).trim() : null;
+    }
+
+    if (!Object.keys(updateData).length) {
+      return res.status(400).json({ message: "Nu ai furnizat câmpuri de actualizat." });
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: req.user.id },
+      data: updateData,
+    });
+
+    return res.json({
+      message: "Profilul a fost actualizat cu succes.",
+      user: toPublicJSON(updatedUser),
+    });
+  } catch (error) {
+    console.error("UpdateMe error:", error);
+    return res.status(500).json(SERVER_ERROR);
+  }
+};
+
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: "Parola curentă și noua parolă sunt obligatorii." });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) return res.status(404).json({ message: "Utilizatorul nu a fost găsit." });
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Parola curentă este incorectă." });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ message: "Noua parolă nu poate fi identică cu cea curentă." });
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 12);
+
+    await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id: user.id },
+        data: { passwordHash },
+      });
+      // Revocăm toate refresh token-urile vechi
+      await tx.refreshToken.updateMany({
+        where: { userId: user.id, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      await issueSession(tx, res, user);
+    });
+
+    return res.json({ message: "Parola a fost modificată cu succes." });
+  } catch (error) {
+    console.error("ChangePassword error:", error);
+    return res.status(500).json(SERVER_ERROR);
+  }
+};

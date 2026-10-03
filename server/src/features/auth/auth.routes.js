@@ -6,6 +6,8 @@ import {
   login,
   logout,
   getMe,
+  updateMe,
+  changePassword,
   refreshTokens,
   googleCallback,
   forgotPassword,
@@ -19,6 +21,8 @@ import {
   loginRules,
   forgotPasswordRules,
   resetPasswordRules,
+  updateMeRules,
+  changePasswordRules,
 } from "./auth.validator.js";
 
 const router = express.Router();
@@ -29,6 +33,8 @@ router.post("/register", registerRules, validate, register);
 router.post("/login", loginLimiter, loginRules, validate, login);
 router.post("/logout", logout);
 router.get("/me", protect, getMe);
+router.patch("/me", protect, updateMeRules, validate, updateMe);
+router.post("/change-password", protect, changePasswordRules, validate, changePassword);
 router.post("/refresh", refreshTokens);
 
 // Resetare parolă

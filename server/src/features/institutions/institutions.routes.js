@@ -14,6 +14,8 @@ import {
   deleteRoutingRuleController,
 } from "./institutions.controller.js";
 
+import { getInstitutionTransparencyController } from "../analytics/analytics.controller.js";
+
 const router = Router();
 
 // Reguli de rutare (ADMIN)
@@ -21,8 +23,9 @@ router.get("/routing-rules", protect, restrictTo("ADMIN"), listRoutingRulesContr
 router.post("/routing-rules", protect, restrictTo("ADMIN"), createRoutingRuleController);
 router.delete("/routing-rules/:id", protect, restrictTo("ADMIN"), deleteRoutingRuleController);
 
-// Profiluri publice instituții
+// Profiluri publice instituții și raport de transparență
 router.get("/", optionalAuth, listInstitutionsController);
+router.get("/:idOrSlug/transparency", optionalAuth, getInstitutionTransparencyController);
 router.get("/:idOrSlug", optionalAuth, getInstitutionController);
 
 // Administrare instituții
