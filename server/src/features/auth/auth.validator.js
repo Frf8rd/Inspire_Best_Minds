@@ -30,10 +30,14 @@ export const forgotPasswordLimiter = rateLimit({
 });
 
 export const registerRules = [
-  body("username")
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage("Username-ul trebuie să conțină între 2 și 50 caractere"),
+  // `name` (nou) sau `username` (vechi) — cel puțin unul, 2–50 caractere
+  body().custom((_, { req }) => {
+    const name = String(req.body.name ?? req.body.username ?? "").trim();
+    if (name.length < 2 || name.length > 50) {
+      throw new Error("Numele trebuie să conțină între 2 și 50 caractere");
+    }
+    return true;
+  }),
   body("email")
     .trim()
     .isEmail()

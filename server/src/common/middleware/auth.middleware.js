@@ -1,89 +1,50 @@
-import bcrypt from "bcryptjs";
 import { prisma } from "../../config/database.js";
-import {
-  verifyAccessToken,
-  verifyRefreshToken,
-  attachTokenCookies,
-} from "../utils/jwt.js";
+import { verifyAccessToken } from "../utils/jwt.js";
 
+/**
+ * Verifică access token-ul din cookie și încarcă userul curent din DB, ca rolul
+ * și `isActive` să fie mereu cele reale (nu cele din token).
+ * Când access token-ul a expirat răspunde 401 cu code "TOKEN_EXPIRED" —
+ * clientul apelează POST /api/auth/refresh și reia cererea.
+ */
 export const protect = async (req, res, next) => {
   try {
     const accessToken = req.cookies?.accessToken;
-    const refreshToken = req.cookies?.refreshToken;
-
-    if (accessToken) {
-      try {
-        const decoded = verifyAccessToken(accessToken);
-        req.user = { id: decoded.id, role: decoded.role };
-        return next();
-      } catch (err) {
-        if (err.name !== "TokenExpiredError") {
-          return res.status(401).json({ message: "Invalid token. Please log in again." });
-        }
-      }
-    }
-
-    if (!refreshToken) {
-      return res.status(401).json({ message: "Not authenticated. Please log in." });
+    if (!accessToken) {
+      return res.status(401).json({ message: "Nu ești autentificat.", code: "NO_TOKEN" });
     }
 
     let decoded;
     try {
-      decoded = verifyRefreshToken(refreshToken);
-    } catch {
-      return res.status(401).json({ message: "Session expired. Please log in again." });
+      decoded = verifyAccessToken(accessToken);
+    } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ message: "Sesiunea a expirat.", code: "TOKEN_EXPIRED" });
+      }
+      return res.status(401).json({ message: "Token invalid.", code: "INVALID_TOKEN" });
     }
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
+      select: { id: true, role: true, isActive: true },
     });
 
     if (!user || !user.isActive) {
-      return res.status(401).json({ message: "User not found or account disabled." });
+      return res.status(401).json({ message: "Utilizator inexistent sau cont dezactivat." });
     }
 
-    if (!user.refreshToken) {
-      return res.status(401).json({ message: "Session expired. Please log in again." });
-    }
-
-    let tokenValid = false;
-    try {
-      tokenValid = await bcrypt.compare(refreshToken, user.refreshToken);
-    } catch {
-      return res.status(401).json({ message: "Invalid session. Please log in again." });
-    }
-
-    if (!tokenValid) {
-      return res.status(401).json({ message: "Invalid session. Please log in again." });
-    }
-
-    const { refreshToken: newRefreshToken } = attachTokenCookies(res, user);
-    const salt = await bcrypt.genSalt(10);
-    const hashedRefreshToken = await bcrypt.hash(newRefreshToken, salt);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { refreshToken: hashedRefreshToken },
-    });
-
-    req.user = { id: user.id, role: user.role || user.rol };
+    req.user = { id: user.id, role: user.role };
     return next();
   } catch (error) {
     console.error("Auth middleware error:", error);
-    return res.status(500).json({ message: "Authentication error.", detail: error.message });
+    return res.status(500).json({ message: "Eroare de autentificare." });
   }
 };
 
-export const restrictTo = (...roles) => {
-  return (req, res, next) => {
-    const userRole = (req.user?.role || "").toLowerCase();
-    const normalizedRoles = roles.map((r) => r.toLowerCase());
-
-    if (!normalizedRoles.includes(userRole)) {
-      return res.status(403).json({
-        message: "You do not have permission to perform this action.",
-      });
-    }
-    next();
-  };
+// Ex.: restrictTo("ADMIN", "STAFF")
+export const restrictTo = (...roles) => (req, res, next) => {
+  if (!roles.includes(req.user?.role)) {
+    return res.status(403).json({ message: "Nu ai permisiunea de a efectua această acțiune." });
+  }
+  next();
 };

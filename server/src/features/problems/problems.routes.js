@@ -1,9 +1,21 @@
 import { Router } from "express";
-import { createProblemController } from "./problems.controller.js";
-import { testAuth } from "./problems.testAuth.js";
+import { protect, restrictTo } from "../../common/middleware/auth.middleware.js";
+import {
+  listCategoriesController,
+  createProblemController,
+  listProblemsController,
+  getProblemController,
+  updateStatusController,
+} from "./problems.controller.js";
 
 const router = Router();
 
-router.post("/", testAuth, createProblemController);
+router.use(protect);
+
+router.get("/categories", listCategoriesController);
+router.get("/", listProblemsController);
+router.post("/", createProblemController); // orice utilizator autentificat
+router.get("/:id", getProblemController);
+router.patch("/:id/status", restrictTo("STAFF", "ADMIN"), updateStatusController);
 
 export default router;

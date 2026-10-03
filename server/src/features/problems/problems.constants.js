@@ -1,47 +1,21 @@
-export const PROBLEM_STATUS = {
-  NOUA: "NOUA",
-  IN_VERIFICARE: "IN_VERIFICARE",
-  CONFIRMATA: "CONFIRMATA",
-  REPARTIZATA: "REPARTIZATA",
-  IN_LUCRU: "IN_LUCRU",
-  REZOLVATA: "REZOLVATA",
-  RESPINSA: "RESPINSA",
-  DUPLICAT: "DUPLICAT",
-  INFORMATII_INSUFICIENTE: "INFORMATII_INSUFICIENTE",
-};
-
+// Statusurile vin din enum-ul ReportStatus din schema.prisma.
+// Tranzițiile pe care le poate face personalul instituției (STAFF/ADMIN).
+// RESOLVED și REOPENED NU sunt aici: ele rezultă din confirmările cetățenilor
+// (ReportConfirmation), nu dintr-o schimbare manuală de status.
 export const STATUS_TRANSITIONS = {
-  NOUA: [
-    "IN_VERIFICARE",
-    "RESPINSA",
-    "INFORMATII_INSUFICIENTE",
-  ],
-
-  IN_VERIFICARE: [
-    "CONFIRMATA",
-    "RESPINSA",
-    "DUPLICAT",
-    "INFORMATII_INSUFICIENTE",
-  ],
-
-  CONFIRMATA: [
-    "REPARTIZATA",
-    "DUPLICAT",
-  ],
-
-  REPARTIZATA: [
-    "IN_LUCRU",
-  ],
-
-  IN_LUCRU: [
-    "REZOLVATA",
-  ],
-
-  REZOLVATA: [],
-
-  RESPINSA: [],
-
-  DUPLICAT: [],
-
-  INFORMATII_INSUFICIENTE: [],
+  NEW: ["IN_REVIEW", "REJECTED", "NEEDS_INFO"],
+  IN_REVIEW: ["CONFIRMED", "REJECTED", "DUPLICATE", "NEEDS_INFO"],
+  NEEDS_INFO: ["IN_REVIEW", "REJECTED"],
+  CONFIRMED: ["ASSIGNED", "DUPLICATE"],
+  ASSIGNED: ["IN_PROGRESS"],
+  IN_PROGRESS: ["RESOLVED_PENDING_CONFIRMATION"],
+  REOPENED: ["ASSIGNED", "IN_PROGRESS"],
+  RESOLVED_PENDING_CONFIRMATION: [],
+  RESOLVED: [],
+  REJECTED: [],
+  DUPLICATE: [],
 };
+
+export const REPORT_STATUSES = Object.keys(STATUS_TRANSITIONS);
+
+export const formatReportCode = (number) => `#UP-${String(number).padStart(4, "0")}`;

@@ -1,6 +1,6 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
-import { prisma } from "../src/config/database.js";
+import { prisma } from "./src/config/database.js";
 
 // Doar pentru dezvoltare locală. Parola implicită NU trebuie folosită în producție.
 const DEV_PASSWORD = process.env.SEED_PASSWORD || "Test1234";

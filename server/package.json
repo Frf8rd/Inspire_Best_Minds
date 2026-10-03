@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node --watch src/index.js",
-    "start": "node src/index.js"
+    "dev": "tsx watch src/index.js",
+    "start": "tsx src/index.js",
+    "seed": "tsx prisma/seed.js",
+    "test:auth": "tsx test-auth.js",
+    "test:problems": "tsx test-problems.js"
   },
   "keywords": [],
   "author": "",
@@ -26,10 +29,10 @@
     "passport-google-oauth20": "^2.0.0",
     "pg": "^8.23.1",
     "prisma": "^7.10.0",
-    "resend": "^6.32.0"
+    "resend": "^6.32.0",
+    "tsx": "^4.23.15"
   },
   "devDependencies": {
-    "@types/node": "^26.6.4",
-    "tsx": "^4.23.15"
+    "@types/node": "^26.6.4"
   }
 }

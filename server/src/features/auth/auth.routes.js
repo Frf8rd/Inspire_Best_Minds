@@ -10,8 +10,6 @@ import {
   googleCallback,
   forgotPassword,
   resetPassword,
-  verifyEmail,
-  resendVerification,
 } from "./auth.controller.js";
 import {
   validate,
@@ -29,17 +27,13 @@ const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 // Autentificare clasică
 router.post("/register", registerRules, validate, register);
 router.post("/login", loginLimiter, loginRules, validate, login);
-router.post("/logout", protect, logout);
+router.post("/logout", logout);
 router.get("/me", protect, getMe);
 router.post("/refresh", refreshTokens);
 
 // Resetare parolă
 router.post("/forgot-password", forgotPasswordLimiter, forgotPasswordRules, validate, forgotPassword);
 router.post("/reset-password", resetPasswordRules, validate, resetPassword);
-
-// Verificare email
-router.get("/verify-email", verifyEmail);
-router.post("/resend-verification", protect, resendVerification);
 
 // Google OAuth 2.0
 router.get(

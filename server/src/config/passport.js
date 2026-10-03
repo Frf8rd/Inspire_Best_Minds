@@ -1,6 +1,8 @@
 import passport from "passport";
 import { Strategy as GoogleStrategy } from "passport-google-oauth20";
+import "dotenv/config";
 import { prisma } from "./database.js";
+import { randomPasswordHash } from "../features/auth/auth.controller.js";
 
 const clientID = process.env.GOOGLE_CLIENT_ID;
 const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
@@ -18,61 +20,34 @@ if (clientID && clientSecret) {
       async (accessToken, refreshToken, profile, done) => {
         try {
           const email = profile.emails?.[0]?.value;
-          const avatar = profile.photos?.[0]?.value;
 
           if (!email) {
             return done(new Error("No email returned from Google"), null);
           }
 
-          let user = await prisma.user.findFirst({
-            where: { googleId: profile.id },
-          });
+          if (profile._json?.email_verified === false) {
+            return done(new Error("Emailul Google nu este verificat"), null);
+          }
+
+          // Schema nu mai are googleId: identificăm contul după email (Google îl verifică).
+          const normalizedEmail = email.toLowerCase().trim();
+          let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
           if (user) {
-            user = await prisma.user.update({
-              where: { id: user.id },
-              data: {
-                avatar: avatar || user.avatar,
-                lastLoginAt: new Date(),
-              },
-            });
             return done(null, user);
           }
 
-          user = await prisma.user.findUnique({
-            where: { email: email.toLowerCase().trim() },
-          });
-
-          if (user) {
-            user = await prisma.user.update({
-              where: { id: user.id },
-              data: {
-                googleId: profile.id,
-                provider: "google",
-                avatar: user.avatar || avatar,
-                isEmailVerified: true,
-                lastLoginAt: new Date(),
-              },
-            });
-            return done(null, user);
-          }
-
-          const newUser = await prisma.user.create({
+          // Cont nou: CITIZEN, cu o parolă aleatoare pe care nimeni n-o cunoaște
+          // (passwordHash este obligatoriu în schemă).
+          user = await prisma.user.create({
             data: {
-              username: profile.displayName || email.split("@")[0],
-              nume: profile.displayName || email.split("@")[0],
-              email: email.toLowerCase().trim(),
-              googleId: profile.id,
-              avatar: avatar || null,
-              provider: "google",
-              password: null,
-              parola: "",
-              isEmailVerified: true,
-              lastLoginAt: new Date(),
+              name: profile.displayName || normalizedEmail.split("@")[0],
+              email: normalizedEmail,
+              passwordHash: await randomPasswordHash(),
             },
           });
 
-          return done(null, newUser);
+          return done(null, user);
         } catch (error) {
           return done(error, null);
         }

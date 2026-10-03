@@ -83,7 +83,7 @@ export const sendPasswordResetEmail = async (user, resetToken) => {
     title: "Resetare parolă cont",
     eyebrow: "Cerere de resetare a parolei",
     body: `
-      <p>Salut <strong>${user.username || user.nume || "Utilizator"}</strong>,</p>
+      <p>Salut <strong>${user.name || "Utilizator"}</strong>,</p>
       <p>Am primit o solicitare de resetare a parolei pentru contul tău. Apasă butonul de mai jos pentru a alege o nouă parolă.</p>
       <p>Acest link este valabil timp de <strong>10 minute</strong>. Dacă nu ai solicitat resetarea, poți ignora acest mesaj.</p>
     `,
@@ -94,28 +94,6 @@ export const sendPasswordResetEmail = async (user, resetToken) => {
   return sendEmail({
     to: user.email,
     subject: `Resetare parolă cont (valabil 10 min)`,
-    html,
-  });
-};
-
-export const sendEmailVerificationEmail = async (user, verificationToken) => {
-  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-  const verifyURL = `${clientUrl}/verify-email?token=${verificationToken}`;
-  const html = buildShell({
-    title: "Confirmă adresa de email",
-    eyebrow: `Bine ai venit la ${BRAND_NAME}`,
-    body: `
-      <p>Salut <strong>${user.username || user.nume || "Utilizator"}</strong>,</p>
-      <p>Îți mulțumim că te-ai înregistrat! Te rugăm să îți confirmi adresa de email pentru a activa contul.</p>
-      <p>Acest link este valabil timp de <strong>24 de ore</strong>.</p>
-    `,
-    buttonLabel: "Confirmă Emailul",
-    buttonUrl: verifyURL,
-  });
-
-  return sendEmail({
-    to: user.email,
-    subject: `Confirmare adresă de email - ${BRAND_NAME}`,
     html,
   });
 };
