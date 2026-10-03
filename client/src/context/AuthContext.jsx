@@ -9,8 +9,13 @@ export function AuthProvider({ children }) {
     user,
     login: (email, pw) => setUser(api.login(email, pw)),
     register: (data) => setUser(api.register(data)),
+    loginWithGoogle: (profile) => setUser(api.loginWithGoogle(profile)),
     logout: () => { api.logout(); setUser(null) },
-    update: (patch) => { api.updateUser(user.id, patch); setUser(api.currentUser()) },
+    update: (patch) => {
+      const updatedUser = api.updateUser(user.id, patch)
+      setUser(updatedUser)
+      return updatedUser
+    },
   }
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }
