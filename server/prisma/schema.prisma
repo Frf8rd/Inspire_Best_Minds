@@ -1,11 +1,133 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
+
 datasource db {
   provider = "postgresql"
+}
+
+// ── Modelul de Utilizator (cu toate câmpurile de Auth + Profil)
+model User {
+  id                       Int             @id @default(autoincrement())
+  username                 String?
+  nume                     String?
+  email                    String          @unique
+  password                 String?
+  parola                   String?
+  rol                      UserRole        @default(USER)
+  role                     String          @default("user") // "user" | "admin"
+  provider                 String          @default("local") // "local" | "google"
+  googleId                 String?
+  refreshToken             String?         // Hash-ul bcrypt al refresh token-ului
+  passwordResetToken       String?         // Hash SHA256 pentru resetare parolă
+  passwordResetExpires     DateTime?
+  emailVerificationToken   String?         // Hash SHA256 pentru confirmare email
+  emailVerificationExpires DateTime?
+  phone                    String?
+  avatar                   String?
+  dateOfBirth              DateTime?
+  gender                   String?
+  isActive                 Boolean         @default(true)
+  isEmailVerified          Boolean         @default(false)
+  lastLoginAt              DateTime?
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @default(now()) @updatedAt
+  Problem                  Problem[]
+  StatusHistory            StatusHistory[]
+
+  @@index([googleId])
+}
+
+// ── Modelele existente în aplicație
+model Category {
+  id               Int               @id @default(autoincrement())
+  denumire         String
+  descriere        String?
+  serviciuId       Int?
+  MunicipalService MunicipalService? @relation(fields: [serviciuId], references: [id])
+  Problem          Problem[]
+}
+
+model MunicipalService {
+  id       Int        @id @default(autoincrement())
+  denumire String
+  contact  String?
+  Category Category[]
+  Problem  Problem[]
+}
+
+model Photo {
+  id         Int      @id @default(autoincrement())
+  problemaId Int
+  cale       String
+  data       DateTime @default(now())
+  Problem    Problem  @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+
+  @@index([problemaId])
+}
+
+model Problem {
+  id               Int               @id @default(autoincrement())
+  code             String            @unique
+  utilizatorId     Int
+  categorieId      Int
+  serviciuId       Int?
+  titlu            String
+  descriere        String
+  latitudine       Float?
+  longitudine      Float?
+  status           ProblemStatus     @default(NOUA)
+  prioritate       ProblemPriority   @default(MEDIE)
+  dataCrearii      DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  Photo            Photo[]
+  Category         Category          @relation(fields: [categorieId], references: [id])
+  MunicipalService MunicipalService? @relation(fields: [serviciuId], references: [id])
+  User             User              @relation(fields: [utilizatorId], references: [id])
+  StatusHistory    StatusHistory[]
+
+  @@index([categorieId])
+  @@index([latitudine, longitudine])
+  @@index([prioritate])
+  @@index([status])
+  @@index([utilizatorId])
+}
+
+model StatusHistory {
+  id           Int           @id @default(autoincrement())
+  problemaId   Int
+  status       ProblemStatus
+  comentariu   String?
+  utilizatorId Int
+  data         DateTime      @default(now())
+  Problem      Problem       @relation(fields: [problemaId], references: [id], onDelete: Cascade)
+  User         User          @relation(fields: [utilizatorId], references: [id])
+
+  @@index([problemaId])
+  @@index([utilizatorId])
+}
+
+enum ProblemPriority {
+  SCZUTA
+  MEDIE
+  RIDICATA
+  CRITICA
+}
+
+enum ProblemStatus {
+  NOUA
+  IN_VERIFICARE
+  CONFIRMATA
+  REPARTIZATA
+  IN_LUCRU
+  REZOLVATA
+  RESPINSA
+  DUPLICAT
+  INFORMATII_INSUFICIENTE
+}
+
+enum UserRole {
+  USER
+  ADMIN
+  OPERATOR
 }
