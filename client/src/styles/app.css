@@ -17,7 +17,7 @@
   padding: 1rem .75rem;
   overflow: hidden;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 24px;
   background: var(--sidebar-surface);
   transition: width .54s cubic-bezier(.22, 1, .36, 1), background .2s ease;
   z-index: 1000;
@@ -146,19 +146,17 @@
   flex: 1;
 }
 
+.sidebar-auth {
+  text-decoration: none;
+}
+
+.sidebar-auth::before {
+  border-radius: 12px;
+}
+
 main {
   min-width: 0;
   flex: 1;
-}
-
-.top-auth {
-  position: fixed;
-  z-index: 1100;
-  top: 1rem;
-  right: 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: .5rem;
 }
 
 @media (max-width: 768px) {

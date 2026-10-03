@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const iconPaths = {
@@ -32,7 +32,7 @@ export default function Sidebar() {
 
   return (
     <aside className="sidebar">
-      <div className="brand"><span className="brand-mark">IB</span><span className="label">Inspire Best Minds</span></div>
+      <div className="brand"><span className="brand-mark">SMK</span><span className="label">Inspire Best Minds</span></div>
       {items.map(({ to, label, icon }) => (
         <NavLink key={to} to={to} end={to === '/'} title={label}
           className={({ isActive }) => 'nav-item' + (isActive ? ' active' : '')}>
@@ -45,6 +45,11 @@ export default function Sidebar() {
           <SidebarIcon name="logout" /><span className="label">Log out ({user.name.split(' ')[0]})</span>
         </button>
       ) : null}
+      {!user && (
+        <Link className="nav-item sidebar-auth" to="/auth" title="Log in / Sign up">
+          <SidebarIcon name="login" /><span className="label">Log in / Sign up</span>
+        </Link>
+      )}
     </aside>
   )
 }

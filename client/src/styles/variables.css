@@ -4,11 +4,11 @@
   --primary-soft: rgba(141, 255, 107, .14);
   --accent: #f0a63a;
   --accent-hover: #f5b858;
-  --bg: #0b0c0e;
-  --surface: #16171a;
-  --surface-raised: #1c1d21;
-  --surface-hover: #24262a;
-  --sidebar-surface: #191b1f;
+  --bg: #191a1d;
+  --surface: #212226;
+  --surface-raised: #282a2e;
+  --surface-hover: #303237;
+  --sidebar-surface: #1c1e22;
   --sidebar-active: #ffffff;
   --sidebar-hover: #2a2d33;
   --brand-mark-bg: #80caff;
@@ -35,5 +35,5 @@
   --shadow: 0 18px 48px rgba(0, 0, 0, .28);
   --shadow-floating: 0 24px 64px rgba(0, 0, 0, .48);
   --rail: 76px;
-  --side: 268px;
+  --side: 252px;
 }
