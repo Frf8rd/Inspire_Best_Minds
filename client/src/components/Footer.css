@@ -1,0 +1,131 @@
+.site-footer {
+  display: grid;
+  min-height: 15rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.75rem;
+  padding: 2.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.site-footer__main {
+  display: grid;
+  grid-template-columns: minmax(14rem, 1.5fr) repeat(2, minmax(9rem, .65fr));
+  gap: 2rem;
+  width: min(100%, 1320px);
+  margin: 0 auto;
+}
+
+.site-footer__about {
+  max-width: 25rem;
+}
+
+.site-footer__brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: .8rem;
+  color: var(--text);
+  font-size: .85rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.site-footer__about p {
+  max-width: 19rem;
+  margin: .9rem 0 .8rem;
+  color: var(--muted);
+  font-size: .82rem;
+  line-height: 1.65;
+}
+
+.site-footer__location {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  color: var(--text-secondary);
+  font-size: .72rem;
+}
+
+.site-footer__location i {
+  width: .45rem;
+  height: .45rem;
+  border-radius: 50%;
+  background: var(--brand-mark-bg);
+}
+
+.site-footer__mark {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand-mark-bg);
+  color: var(--brand-mark-text);
+  font-size: .72rem;
+}
+
+.site-footer__group {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: .75rem;
+}
+
+.site-footer__group h2 {
+  margin: .2rem 0 .25rem;
+  color: var(--text);
+  font-size: .76rem;
+  font-weight: 700;
+}
+
+.site-footer__group a {
+  color: var(--muted);
+  font-size: .74rem;
+  text-decoration: none;
+  transition: color .16s ease;
+}
+
+.site-footer__group a:hover {
+  color: var(--primary);
+}
+
+.site-footer__bottom {
+  display: flex;
+  width: min(100%, 1320px);
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border);
+}
+
+.site-footer__bottom small {
+  color: var(--muted);
+  font-size: .66rem;
+}
+
+@media (max-width: 700px) {
+  .site-footer {
+    min-height: 18rem;
+    gap: 1.5rem;
+    padding: 1.75rem 1.25rem calc(1.75rem + 1rem);
+  }
+
+  .site-footer__main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 1rem;
+  }
+
+  .site-footer__about {
+    grid-column: 1 / -1;
+  }
+
+  .site-footer__bottom {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .4rem;
+  }
+}

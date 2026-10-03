@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
+import Footer from './Footer'
 import { useAuth } from '../context/AuthContext'
 
 export default function Layout() {
@@ -8,7 +9,10 @@ export default function Layout() {
     <div className="shell collapsed">
       <Sidebar />
       {!user && <div className="top-auth"><Link className="btn btn-primary" to="/auth">Log in / Sign up</Link></div>}
-      <main><Outlet /></main>
+      <main>
+        <Outlet />
+        <Footer />
+      </main>
     </div>
   )
 }

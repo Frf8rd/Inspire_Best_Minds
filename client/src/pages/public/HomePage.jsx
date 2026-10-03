@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useCases } from '../../hooks/useCases'
-import CasesMap from '../../components/CasesMap'
 import CaseCard from '../../components/CaseCard'
+import { CATEGORIES } from '../../utils/constants'
 import './HomePage.css'
 
 export default function HomePage() {
@@ -18,29 +18,43 @@ export default function HomePage() {
   ]
   const latestCases = cases.slice(0, 4)
   const openMapCase = (id) => navigate(`/map?case=${encodeURIComponent(id)}`)
+  const categoryDetails = {
+    pothole: 'Road damage and hazards',
+    lighting: 'Street lights and visibility',
+    parking: 'Blocked sidewalks and crossings',
+    trash: 'Dumping and overflowing bins',
+    sidewalk: 'Walking routes and surfaces',
+    other: 'Other neighborhood concerns',
+  }
+  const categoryCounts = Object.entries(CATEGORIES).map(([key, label]) => ({
+    key,
+    label,
+    detail: categoryDetails[key],
+    count: cases.filter((caseItem) => caseItem.category === key).length,
+  }))
 
   return (
     <div className="page home-page">
-      <header className="home-page__intro">
-        <div className="home-page__intro-copy">
+      <section aria-labelledby="home-hero-title" className="home-page__hero">
+        <img
+          alt="City street lined with buildings and trees"
+          className="home-page__hero-image"
+          src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=2200&q=85"
+        />
+        <div className="home-page__hero-shade" />
+        <div className="home-page__hero-content">
           <p className="home-page__eyebrow"><span /> Chișinău · Civic response</p>
-          <h1>A clearer picture of our city.</h1>
+          <h1 id="home-hero-title">A clearer picture of our city.</h1>
           <p className="home-page__summary">
-            Report a local problem, bring neighbors together, and follow its progress until it is resolved.
+            Report local problems, bring neighbors together, and follow every case through to a resolution.
           </p>
           <div className="home-page__actions">
             <Link className="btn btn-primary" to="/report">Report a problem <span aria-hidden="true">↗</span></Link>
-            <Link className="home-page__text-link" to="/map">Explore all cases <span aria-hidden="true">→</span></Link>
+            <Link className="home-page__secondary-action" to="/map">See reported problems <span aria-hidden="true">→</span></Link>
           </div>
         </div>
-        <div className="home-page__city-note">
-          <span className="home-page__city-note-mark" aria-hidden="true">47°</span>
-          <div>
-            <strong>Local eyes. Shared progress.</strong>
-            <p>Every report helps make the next decision clearer.</p>
-          </div>
-        </div>
-      </header>
+        <div className="home-page__hero-location"><span /> Chișinău, Moldova</div>
+      </section>
 
       <section aria-label="Community activity" className="home-page__stats">
         {stats.map((stat) => (
@@ -52,28 +66,58 @@ export default function HomePage() {
         ))}
       </section>
 
-      <section className="home-page__map-section">
+      <section className="home-page__workflow">
         <div className="home-page__section-heading">
           <div>
-            <p className="home-page__eyebrow">Community map</p>
-            <h2>Reports across Chișinău</h2>
+            <p className="home-page__eyebrow">A simple local process</p>
+            <h2>From what you notice to visible progress</h2>
           </div>
-          <Link className="home-page__text-link" to="/map">Open full map <span aria-hidden="true">→</span></Link>
+          <Link className="home-page__text-link" to="/report">Start a report <span aria-hidden="true">→</span></Link>
         </div>
-        <div className="home-page__map-frame">
-          <CasesMap cases={cases} onSelect={openMapCase} />
-          <div className="home-page__map-caption">
-            <span className="home-page__map-pulse" />
-            <span>{cases.length} community reports</span>
-            <span className="home-page__map-caption-divider" />
-            <span>Chișinău, Moldova</span>
-          </div>
-          {!cases.length && (
-            <div className="home-page__map-empty">
-              <strong>The map is ready for its first report.</strong>
-              <Link to="/report">Add a local issue <span aria-hidden="true">→</span></Link>
+        <ol className="home-page__workflow-list">
+          <li className="home-page__workflow-step">
+            <span className="home-page__step-number">01</span>
+            <div>
+              <h3>Show the issue</h3>
+              <p>Add a short description, choose a category, and mark the location.</p>
             </div>
-          )}
+          </li>
+          <li className="home-page__workflow-step">
+            <span className="home-page__step-number">02</span>
+            <div>
+              <h3>Build the shared picture</h3>
+              <p>Neighbors can confirm a case that affects their area too.</p>
+            </div>
+          </li>
+          <li className="home-page__workflow-step">
+            <span className="home-page__step-number">03</span>
+            <div>
+              <h3>Follow its status</h3>
+              <p>Check whether a case is new, in progress, or resolved.</p>
+            </div>
+          </li>
+        </ol>
+      </section>
+
+      <section className="home-page__categories">
+        <div className="home-page__section-heading">
+          <div>
+            <p className="home-page__eyebrow">Everyday city issues</p>
+            <h2>What needs attention near you?</h2>
+          </div>
+          <Link className="home-page__text-link" to="/map">Browse cases <span aria-hidden="true">→</span></Link>
+        </div>
+        <div className="home-page__category-list">
+          {categoryCounts.map((category) => (
+            <Link className="home-page__category" key={category.key} to="/map">
+              <span className="home-page__category-copy">
+                <strong>{category.label}</strong>
+                <small>{category.detail}</small>
+              </span>
+              <span className="home-page__category-count">{category.count}</span>
+              <span aria-hidden="true" className="home-page__category-arrow">↗</span>
+            </Link>
+          ))}
         </div>
       </section>
 

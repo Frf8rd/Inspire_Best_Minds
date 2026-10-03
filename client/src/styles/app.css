@@ -182,13 +182,13 @@ main {
 
 /* Generic layout */
 .page {
-  max-width: 1050px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 2.25rem 2rem;
 }
 
 .page.wide {
-  max-width: 1250px;
+  max-width: 1480px;
 }
 
 .row {

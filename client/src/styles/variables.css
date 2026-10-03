@@ -16,12 +16,18 @@
   --border: rgba(255, 255, 255, .08);
   --border-strong: rgba(255, 255, 255, .14);
   --text: #f4f5f6;
+  --text-secondary: #a1a4aa;
   --text-on-accent: #0b0c0e;
   --muted: #a1a4aa;
   --danger: #ff5a4d;
   --danger-soft: rgba(255, 90, 77, .14);
   --danger-border: rgba(255, 90, 77, .32);
   --hero-copy: #d7dddf;
+  --hero-overlay: rgba(5, 7, 9, .86);
+  --hero-overlay-mid: rgba(5, 7, 9, .58);
+  --hero-overlay-edge: rgba(5, 7, 9, .3);
+  --hero-glass: rgba(11, 12, 14, .46);
+  --hero-glass-hover: rgba(11, 12, 14, .7);
   --white: #ffffff;
   --radius: 14px;
   --radius-circle: 50%;
