@@ -47,6 +47,7 @@ export const createProblemController = handle(async (req, res) => {
     latitude,
     longitude,
     address,
+    photos: req.files ?? [],
   });
 
   res.status(201).json({ message: "Sesizarea a fost creată cu succes.", problem });
@@ -56,13 +57,20 @@ export const listProblemsController = handle(async (req, res) => {
   const page = Math.max(1, parseInt(req.query.page, 10) || 1);
   const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
   const status = str(req.query.status);
+  const priority = str(req.query.priority);
   if (status && !REPORT_STATUSES.includes(status)) {
     throw new HttpError(400, "Status invalid.");
+  }
+  if (priority && !["LOW", "MEDIUM", "HIGH", "CRITICAL"].includes(priority)) {
+    throw new HttpError(400, "Prioritate invalidă.");
   }
 
   const result = await service.listReports({
     status: status || undefined,
-    categoryId: str(req.query.categoryId) || undefined,
+    category: str(req.query.categoryId || req.query.category) || undefined,
+    priority: priority || undefined,
+    zone: str(req.query.zone) || undefined,
+    boundingBox: parseBoundingBox(req.query),
     reporterId: req.query.mine === "true" ? req.user.id : undefined,
     page,
     limit,
@@ -70,8 +78,93 @@ export const listProblemsController = handle(async (req, res) => {
   res.json(result);
 });
 
+function parseCoordinate(value, label) {
+  if (value === undefined || value === "") return undefined;
+  const coordinate = Number(value);
+  if (!Number.isFinite(coordinate)) throw new HttpError(400, `${label} trebuie să fie un număr.`);
+  return coordinate;
+}
+
+function parseBoundingBox(query) {
+  // bbox = minLng,minLat,maxLng,maxLat. Acceptăm și parametrii expliciți,
+  // mai practici pentru clienții care construiesc URLSearchParams.
+  let values;
+  if (query.bbox) {
+    values = String(query.bbox).split(",").map((value) => Number(value.trim()));
+    if (values.length !== 4 || values.some((value) => !Number.isFinite(value))) {
+      throw new HttpError(400, "bbox trebuie să fie minLng,minLat,maxLng,maxLat.");
+    }
+    const [minLongitude, minLatitude, maxLongitude, maxLatitude] = values;
+    if (minLatitude > maxLatitude || minLongitude > maxLongitude) {
+      throw new HttpError(400, "bbox are limite inverse.");
+    }
+    return { minLatitude, maxLatitude, minLongitude, maxLongitude };
+  }
+
+  const minLatitude = parseCoordinate(query.minLat, "minLat");
+  const maxLatitude = parseCoordinate(query.maxLat, "maxLat");
+  const minLongitude = parseCoordinate(query.minLng, "minLng");
+  const maxLongitude = parseCoordinate(query.maxLng, "maxLng");
+  const valuesArePresent = [minLatitude, maxLatitude, minLongitude, maxLongitude].some(
+    (value) => value !== undefined
+  );
+  if (!valuesArePresent) return undefined;
+  if ([minLatitude, maxLatitude, minLongitude, maxLongitude].some((value) => value === undefined)) {
+    throw new HttpError(400, "Bounding box-ul necesită minLat, maxLat, minLng și maxLng.");
+  }
+  if (minLatitude > maxLatitude || minLongitude > maxLongitude) {
+    throw new HttpError(400, "Bounding box are limite inverse.");
+  }
+  return { minLatitude, maxLatitude, minLongitude, maxLongitude };
+}
+
 export const getProblemController = handle(async (req, res) => {
   res.json({ problem: await service.getReport(req.params.id) });
+});
+
+export const listMyProblemsController = handle(async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+  res.json(await service.listReports({ reporterId: req.user.id, page, limit }));
+});
+
+export const updateProblemController = handle(async (req, res) => {
+  const data = {};
+  if (req.body.title !== undefined) {
+    const title = str(req.body.title);
+    if (title.length < 3 || title.length > 150) {
+      throw new HttpError(400, "Titlul trebuie să aibă între 3 și 150 de caractere.");
+    }
+    data.title = title;
+  }
+  if (req.body.description !== undefined) data.description = str(req.body.description) || null;
+  if (req.body.address !== undefined) data.address = str(req.body.address) || null;
+  if (req.body.categoryId !== undefined) data.categoryId = str(req.body.categoryId);
+  if (req.body.latitude !== undefined) {
+    const latitude = Number(req.body.latitude);
+    if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90) throw new HttpError(400, "Latitudine invalidă.");
+    data.latitude = latitude;
+  }
+  if (req.body.longitude !== undefined) {
+    const longitude = Number(req.body.longitude);
+    if (!Number.isFinite(longitude) || longitude < -180 || longitude > 180) throw new HttpError(400, "Longitudine invalidă.");
+    data.longitude = longitude;
+  }
+  if (!Object.keys(data).length) throw new HttpError(400, "Nu ai transmis câmpuri de actualizat.");
+
+  res.json({
+    message: "Sesizarea a fost actualizată.",
+    problem: await service.updateReport({ reportId: req.params.id, actor: req.user, data }),
+  });
+});
+
+export const deleteProblemController = handle(async (req, res) => {
+  await service.deleteReport({ reportId: req.params.id, actor: req.user });
+  res.status(204).send();
+});
+
+export const historyController = handle(async (req, res) => {
+  res.json({ history: await service.getReportHistory(req.params.id) });
 });
 
 export const updateStatusController = handle(async (req, res) => {

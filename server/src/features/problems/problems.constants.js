@@ -19,3 +19,14 @@ export const STATUS_TRANSITIONS = {
 export const REPORT_STATUSES = Object.keys(STATUS_TRANSITIONS);
 
 export const formatReportCode = (number) => `#UP-${String(number).padStart(4, "0")}`;
+
+// Limitele sunt intenționat centralizate, ca API-ul și interfața să poată folosi
+// aceleași reguli fără valori "magice" împrăștiate prin proiect.
+export const MAX_PHOTOS_PER_REPORT = 5;
+export const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+
+export const ALLOWED_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+]);

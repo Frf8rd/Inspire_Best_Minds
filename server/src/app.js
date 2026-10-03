@@ -4,6 +4,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import passport from "./config/passport.js";
 import routes from "./routes.js";
+import path from "node:path";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(passport.initialize());
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 // API base routing
 app.use("/api", routes);
@@ -33,4 +35,3 @@ app.use((err, req, res, next) => {
 });
 
 export default app;
-  
