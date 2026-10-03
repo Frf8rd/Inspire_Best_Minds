@@ -115,12 +115,63 @@ async function assertReportOwnerOrAdmin(reportId, actor) {
   return report;
 }
 
-export async function listCategories() {
+export async function listCategories(includeInactive = false) {
   return prisma.category.findMany({
-    where: { isActive: true },
+    where: includeInactive ? {} : { isActive: true },
     orderBy: { name: "asc" },
-    select: { id: true, name: true, slug: true, description: true },
   });
+}
+
+export async function createCategory({ name, slug, description }) {
+  if (!name) throw new HttpError(400, "Numele categoriei este obligatoriu.");
+  const cleanSlug = (slug || name).toLowerCase().trim().replace(/\s+/g, "-");
+  const existing = await prisma.category.findFirst({
+    where: { OR: [{ name }, { slug: cleanSlug }] },
+  });
+  if (existing) throw new HttpError(400, "O categorie cu acest nume sau slug există deja.");
+
+  return prisma.category.create({
+    data: {
+      name,
+      slug: cleanSlug,
+      description: description || null,
+      isActive: true,
+    },
+  });
+}
+
+export async function updateCategory(id, { name, slug, description, isActive }) {
+  const existing = await prisma.category.findUnique({ where: { id } });
+  if (!existing) throw new HttpError(404, "Categoria nu există.");
+
+  const cleanSlug = slug ? slug.toLowerCase().trim().replace(/\s+/g, "-") : undefined;
+
+  return prisma.category.update({
+    where: { id },
+    data: {
+      ...(name ? { name } : {}),
+      ...(cleanSlug ? { slug: cleanSlug } : {}),
+      ...(description !== undefined ? { description } : {}),
+      ...(isActive !== undefined ? { isActive: Boolean(isActive) } : {}),
+    },
+  });
+}
+
+export async function deleteCategory(id) {
+  const existing = await prisma.category.findUnique({
+    where: { id },
+    include: { _count: { select: { reports: true, routingRules: true } } },
+  });
+  if (!existing) throw new HttpError(404, "Categoria nu există.");
+
+  if (existing._count.reports > 0 || existing._count.routingRules > 0) {
+    return prisma.category.update({
+      where: { id },
+      data: { isActive: false },
+    });
+  }
+
+  return prisma.category.delete({ where: { id } });
 }
 
 export async function createReport({ reporterId, title, description, categoryId, latitude, longitude, address, photos = [] }) {

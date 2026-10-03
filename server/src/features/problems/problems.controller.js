@@ -17,7 +17,23 @@ const handle = (fn) => async (req, res) => {
 const str = (v) => (typeof v === "string" ? v.trim() : "");
 
 export const listCategoriesController = handle(async (req, res) => {
-  res.json({ categories: await service.listCategories() });
+  const includeInactive = req.query.all === "true" && req.user?.role === "ADMIN";
+  res.json({ categories: await service.listCategories(includeInactive) });
+});
+
+export const createCategoryController = handle(async (req, res) => {
+  const category = await service.createCategory(req.body);
+  res.status(201).json(category);
+});
+
+export const updateCategoryController = handle(async (req, res) => {
+  const category = await service.updateCategory(req.params.id, req.body);
+  res.json(category);
+});
+
+export const deleteCategoryController = handle(async (req, res) => {
+  await service.deleteCategory(req.params.id);
+  res.json({ message: "Categoria a fost ștearsă sau dezactivată." });
 });
 
 export const createProblemController = handle(async (req, res) => {

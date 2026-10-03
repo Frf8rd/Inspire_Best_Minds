@@ -1,7 +1,10 @@
 import { Router } from "express";
-import { protect, restrictTo } from "../../common/middleware/auth.middleware.js";
+import { protect, restrictTo, optionalAuth } from "../../common/middleware/auth.middleware.js";
 import {
   listCategoriesController,
+  createCategoryController,
+  updateCategoryController,
+  deleteCategoryController,
   createProblemController,
   listProblemsController,
   getProblemController,
@@ -25,26 +28,32 @@ import { uploadProblemPhotos } from "./problems.upload.js";
 
 const router = Router();
 
-router.use(protect);
+// Categorii
+router.get("/categories", optionalAuth, listCategoriesController);
+router.post("/categories", protect, restrictTo("ADMIN"), createCategoryController);
+router.put("/categories/:id", protect, restrictTo("ADMIN"), updateCategoryController);
+router.delete("/categories/:id", protect, restrictTo("ADMIN"), deleteCategoryController);
 
-router.get("/categories", listCategoriesController);
-router.get("/", listProblemsController);
-router.post("/", uploadProblemPhotos, createProblemController); // orice utilizator autentificat
-router.get("/:id", getProblemController);
-router.get("/:id/history", historyController);
-router.put("/:id", updateProblemController);
-router.delete("/:id", deleteProblemController);
-router.patch("/:id/status", restrictTo("STAFF", "ADMIN"), updateStatusController);
-router.post("/:id/support", toggleSupportController);
-router.post("/:id/confirm-resolution", confirmResolutionController);
+// Sesizări publice (citire)
+router.get("/", optionalAuth, listProblemsController);
+router.get("/:id", optionalAuth, getProblemController);
+router.get("/:id/history", optionalAuth, historyController);
+router.get("/:id/comments", optionalAuth, listCommentsController);
+router.get("/:id/complaints", optionalAuth, listComplaintsController);
 
-// Comentarii pe sesizare
-router.get("/:id/comments", listCommentsController);
-router.post("/:id/comments", createCommentController);
-router.delete("/:id/comments/:commentId", deleteCommentController);
+// Acțiuni protejate pe sesizări (creare, editare, susținere, status, comentarii)
+router.post("/", protect, uploadProblemPhotos, createProblemController);
+router.put("/:id", protect, updateProblemController);
+router.delete("/:id", protect, deleteProblemController);
+router.patch("/:id/status", protect, restrictTo("STAFF", "ADMIN"), updateStatusController);
+router.post("/:id/support", protect, toggleSupportController);
+router.post("/:id/confirm-resolution", protect, confirmResolutionController);
 
-// Sesizări formale (Complaints) legate de problemă
-router.get("/:id/complaints", listComplaintsController);
-router.post("/:id/complaints", createComplaintController);
+// Comentarii
+router.post("/:id/comments", protect, createCommentController);
+router.delete("/:id/comments/:commentId", protect, deleteCommentController);
+
+// Reclamații formale
+router.post("/:id/complaints", protect, createComplaintController);
 
 export default router;
