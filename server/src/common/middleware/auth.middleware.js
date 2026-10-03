@@ -48,3 +48,26 @@ export const restrictTo = (...roles) => (req, res, next) => {
   }
   next();
 };
+
+export const optionalAuth = async (req, res, next) => {
+  try {
+    const accessToken = req.cookies?.accessToken;
+    if (!accessToken) return next();
+
+    try {
+      const decoded = verifyAccessToken(accessToken);
+      const user = await prisma.user.findUnique({
+        where: { id: decoded.id },
+        select: { id: true, role: true, isActive: true },
+      });
+      if (user && user.isActive) {
+        req.user = { id: user.id, role: user.role };
+      }
+    } catch {
+      // Ignoră tokenurile invalide la rutele cu autentificare opțională
+    }
+    return next();
+  } catch {
+    return next();
+  }
+};

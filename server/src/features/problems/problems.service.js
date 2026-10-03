@@ -5,7 +5,22 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 
-const withCode = (report) => (report ? { ...report, code: formatReportCode(report.number) } : report);
+import {
+  findNearbyOpenDuplicate,
+  calculatePriorityScore,
+} from "./problems.intelligence.js";
+
+const withCode = (report) => {
+  if (!report) return report;
+  const res = { ...report, code: formatReportCode(report.number) };
+  if (res.duplicateOf?.number) {
+    res.duplicateOf = {
+      ...res.duplicateOf,
+      code: formatReportCode(res.duplicateOf.number),
+    };
+  }
+  return res;
+};
 
 const listSelect = {
   id: true,
@@ -14,6 +29,9 @@ const listSelect = {
   description: true,
   status: true,
   priority: true,
+  priorityScore: true,
+  duplicateOfId: true,
+  duplicateOf: { select: { id: true, number: true } },
   supportCount: true,
   latitude: true,
   longitude: true,
@@ -117,6 +135,25 @@ export async function createReport({ reporterId, title, description, categoryId,
     select: { departmentId: true },
   });
 
+  // Inteligență: Căutare duplicate deschise în apropiere (ex: < 30m, 14 zile)
+  const nearbyDuplicate = await findNearbyOpenDuplicate({
+    latitude,
+    longitude,
+    categoryId,
+  });
+
+  const isDuplicate = Boolean(nearbyDuplicate);
+  const parentReport = nearbyDuplicate?.report ?? null;
+
+  // Scor prioritate inițial
+  const initialPriority = isDuplicate
+    ? { priorityScore: 0, priority: "LOW" }
+    : calculatePriorityScore({
+        supportCount: 0,
+        createdAt: new Date(),
+        categorySlug: category.slug,
+      });
+
   let savedPhotos = [];
   let report;
   try {
@@ -131,9 +168,17 @@ export async function createReport({ reporterId, title, description, categoryId,
           reporterId,
           categoryId,
           departmentId: rule?.departmentId ?? null,
+          status: isDuplicate ? "DUPLICATE" : "NEW",
+          duplicateOfId: parentReport ? parentReport.id : null,
+          priorityScore: initialPriority.priorityScore,
+          priority: initialPriority.priority,
         },
         select: listSelect,
       });
+
+      const initialComment = isDuplicate
+        ? `Marcat automat ca duplicat al sesizării ${formatReportCode(parentReport.number)}.`
+        : "Sesizarea a fost creată.";
 
       await tx.statusHistory.create({
         data: {
@@ -141,9 +186,29 @@ export async function createReport({ reporterId, title, description, categoryId,
           fromStatus: null,
           toStatus: created.status,
           authorId: reporterId,
-          comment: "Sesizarea a fost creată.",
+          comment: initialComment,
         },
       });
+
+      // Dacă este duplicat, adăugăm automat un vot (+1) la sesizarea părinte și îi recalculăm prioritatea
+      if (isDuplicate && parentReport) {
+        const newParentSupport = parentReport.supportCount + 1;
+        const parentPriority = calculatePriorityScore({
+          supportCount: newParentSupport,
+          createdAt: parentReport.createdAt,
+          categorySlug: category.slug,
+        });
+
+        await tx.report.update({
+          where: { id: parentReport.id },
+          data: {
+            supportCount: newParentSupport,
+            priorityScore: parentPriority.priorityScore,
+            priority: parentPriority.priority,
+          },
+        });
+      }
+
       return created;
     });
 
@@ -157,7 +222,11 @@ export async function createReport({ reporterId, title, description, categoryId,
     throw error;
   }
 
-  return withCode(report);
+  return {
+    problem: withCode(report),
+    duplicate: isDuplicate,
+    parentCode: parentReport ? formatReportCode(parentReport.number) : null,
+  };
 }
 
 export async function listReports({ status, category, priority, zone, boundingBox, reporterId, page, limit }) {
@@ -241,7 +310,7 @@ export async function getReportHistory(reportId) {
   });
 }
 
-export async function getReport(id) {
+export async function getReport(id, currentUserId = null) {
   const report = await prisma.report.findUnique({
     where: { id },
     select: {
@@ -265,11 +334,196 @@ export async function getReport(id) {
           author: { select: { id: true, name: true } },
         },
       },
+      confirmations: {
+        select: {
+          userId: true,
+          type: true,
+        },
+      },
+      _count: {
+        select: {
+          comments: true,
+        },
+      },
     },
   });
 
   if (!report) throw new HttpError(404, "Sesizarea nu există.");
-  return withCode(report);
+
+  const hasSupported = currentUserId
+    ? report.confirmations.some((c) => c.userId === currentUserId && c.type === "SUPPORT")
+    : false;
+
+  const userConfirmation = currentUserId
+    ? report.confirmations.find(
+        (c) => c.userId === currentUserId && (c.type === "RESOLVED_YES" || c.type === "RESOLVED_NO")
+      )?.type ?? null
+    : null;
+
+  const confirmationsSummary = {
+    support: report.confirmations.filter((c) => c.type === "SUPPORT").length,
+    resolvedYes: report.confirmations.filter((c) => c.type === "RESOLVED_YES").length,
+    resolvedNo: report.confirmations.filter((c) => c.type === "RESOLVED_NO").length,
+  };
+
+  const { confirmations, _count, ...reportData } = report;
+
+  return {
+    ...withCode(reportData),
+    hasSupported,
+    userConfirmation,
+    confirmationsSummary,
+    commentsCount: _count?.comments ?? 0,
+  };
+}
+
+export async function toggleSupport({ reportId, userId }) {
+  const report = await prisma.report.findUnique({
+    where: { id: reportId },
+    select: {
+      id: true,
+      supportCount: true,
+      createdAt: true,
+      category: { select: { slug: true } },
+    },
+  });
+
+  if (!report) throw new HttpError(404, "Sesizarea nu există.");
+
+  const existing = await prisma.reportConfirmation.findUnique({
+    where: {
+      reportId_userId_type: {
+        reportId,
+        userId,
+        type: "SUPPORT",
+      },
+    },
+  });
+
+  if (existing) {
+    // Retrage susținerea (-1)
+    const newCount = Math.max(0, report.supportCount - 1);
+    const { priorityScore, priority } = calculatePriorityScore({
+      supportCount: newCount,
+      createdAt: report.createdAt,
+      categorySlug: report.category?.slug,
+    });
+
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.reportConfirmation.delete({
+        where: { id: existing.id },
+      });
+      return tx.report.update({
+        where: { id: reportId },
+        data: {
+          supportCount: newCount,
+          priorityScore,
+          priority,
+        },
+        select: { id: true, supportCount: true, priorityScore: true, priority: true },
+      });
+    });
+
+    return { supported: false, supportCount: updated.supportCount, priorityScore: updated.priorityScore, priority: updated.priority };
+  } else {
+    // Adaugă susținerea (+1)
+    const newCount = report.supportCount + 1;
+    const { priorityScore, priority } = calculatePriorityScore({
+      supportCount: newCount,
+      createdAt: report.createdAt,
+      categorySlug: report.category?.slug,
+    });
+
+    const updated = await prisma.$transaction(async (tx) => {
+      await tx.reportConfirmation.create({
+        data: {
+          reportId,
+          userId,
+          type: "SUPPORT",
+        },
+      });
+      return tx.report.update({
+        where: { id: reportId },
+        data: {
+          supportCount: newCount,
+          priorityScore,
+          priority,
+        },
+        select: { id: true, supportCount: true, priorityScore: true, priority: true },
+      });
+    });
+
+    return { supported: true, supportCount: updated.supportCount, priorityScore: updated.priorityScore, priority: updated.priority };
+  }
+}
+
+export async function confirmResolution({ reportId, actor, confirmed, comment }) {
+  const report = await prisma.report.findUnique({
+    where: { id: reportId },
+    select: { id: true, status: true },
+  });
+
+  if (!report) throw new HttpError(404, "Sesizarea nu există.");
+
+  if (report.status !== "RESOLVED_PENDING_CONFIRMATION") {
+    throw new HttpError(
+      400,
+      `Confirmarea rezolvării este permisă doar pentru sesizările în starea RESOLVED_PENDING_CONFIRMATION. Starea curentă este ${report.status}.`
+    );
+  }
+
+  const toStatus = confirmed ? "RESOLVED" : "REOPENED";
+  const confType = confirmed ? "RESOLVED_YES" : "RESOLVED_NO";
+  const defaultComment = confirmed
+    ? "Cetățeanul a confirmat rezolvarea sesizării."
+    : "Cetățeanul a infirmat rezolvarea; sesizarea a fost redeschisă.";
+
+  const now = new Date();
+
+  const updated = await prisma.$transaction(async (tx) => {
+    // Șterge voturile anterioare de rezolvare ale utilizatorului pe această sesizare
+    await tx.reportConfirmation.deleteMany({
+      where: {
+        reportId,
+        userId: actor.id,
+        type: { in: ["RESOLVED_YES", "RESOLVED_NO"] },
+      },
+    });
+
+    // Înregistrează confirmarea
+    await tx.reportConfirmation.create({
+      data: {
+        reportId,
+        userId: actor.id,
+        type: confType,
+      },
+    });
+
+    // Actualizează statusul sesizării
+    const rep = await tx.report.update({
+      where: { id: reportId },
+      data: {
+        status: toStatus,
+        ...(confirmed ? { resolutionConfirmedAt: now } : {}),
+      },
+      select: listSelect,
+    });
+
+    // Înregistrează în istoric
+    await tx.statusHistory.create({
+      data: {
+        reportId,
+        fromStatus: "RESOLVED_PENDING_CONFIRMATION",
+        toStatus,
+        authorId: actor.id,
+        comment: comment || defaultComment,
+      },
+    });
+
+    return rep;
+  });
+
+  return withCode(updated);
 }
 
 /**

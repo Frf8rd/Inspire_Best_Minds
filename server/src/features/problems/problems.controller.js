@@ -39,7 +39,7 @@ export const createProblemController = handle(async (req, res) => {
     throw new HttpError(400, "Longitudine invalidă.");
   }
 
-  const problem = await service.createReport({
+  const result = await service.createReport({
     reporterId: req.user.id,
     title,
     description,
@@ -50,7 +50,19 @@ export const createProblemController = handle(async (req, res) => {
     photos: req.files ?? [],
   });
 
-  res.status(201).json({ message: "Sesizarea a fost creată cu succes.", problem });
+  if (result.duplicate) {
+    return res.status(201).json({
+      message: `Există deja o sesizare similară în apropiere (${result.parentCode}). A fost grupată cu ea.`,
+      duplicate: true,
+      problem: result.problem,
+    });
+  }
+
+  res.status(201).json({
+    message: "Sesizarea a fost creată cu succes.",
+    duplicate: false,
+    problem: result.problem,
+  });
 });
 
 export const listProblemsController = handle(async (req, res) => {
@@ -119,7 +131,7 @@ function parseBoundingBox(query) {
 }
 
 export const getProblemController = handle(async (req, res) => {
-  res.json({ problem: await service.getReport(req.params.id) });
+  res.json({ problem: await service.getReport(req.params.id, req.user?.id) });
 });
 
 export const listMyProblemsController = handle(async (req, res) => {
@@ -181,4 +193,41 @@ export const updateStatusController = handle(async (req, res) => {
     assigneeId: str(req.body.assigneeId) || undefined,
   });
   res.json({ message: "Statusul a fost actualizat.", problem });
+});
+
+export const toggleSupportController = handle(async (req, res) => {
+  const result = await service.toggleSupport({
+    reportId: req.params.id,
+    userId: req.user.id,
+  });
+  res.json({
+    message: result.supported ? "Ai adăugat susținere (+1) pentru această sesizare." : "Ai retras susținerea (-1).",
+    ...result,
+  });
+});
+
+export const confirmResolutionController = handle(async (req, res) => {
+  let confirmed = req.body.confirmed;
+  if (confirmed === undefined && req.body.status) {
+    if (req.body.status === "RESOLVED") confirmed = true;
+    else if (req.body.status === "REOPENED") confirmed = false;
+  }
+
+  if (typeof confirmed !== "boolean") {
+    throw new HttpError(400, "Specifică 'confirmed' (true/false) sau 'status' ('RESOLVED'/'REOPENED').");
+  }
+
+  const problem = await service.confirmResolution({
+    reportId: req.params.id,
+    actor: req.user,
+    confirmed,
+    comment: str(req.body.comment),
+  });
+
+  res.json({
+    message: confirmed
+      ? "Rezolvarea sesizării a fost confirmată."
+      : "Rezolvarea a fost infirmată; sesizarea a fost redeschisă.",
+    problem,
+  });
 });
