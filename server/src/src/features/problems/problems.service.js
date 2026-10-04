@@ -98,9 +98,6 @@ async function removeStoredPhotos(photos) {
 // Rulează verificarea AI pe fotografiile încărcate. Aruncă 422 doar pentru conținut respins;
 // orice altă problemă (AI indisponibil etc.) dă verdict SKIPPED și sesizarea merge mai departe.
 async function verifyPhotosWithAi({ photos, title, description, categoryId, reporterId }) {
-  const empty = { severity: undefined, reportFields: {} };
-  if (!photos.length) return empty;
-
   for (const file of photos) {
     const image = inspectImage(file.buffer);
     if (!image || image.mimeType !== file.mimetype) {
@@ -122,10 +119,12 @@ async function verifyPhotosWithAi({ photos, title, description, categoryId, repo
 
   // Aceeași poză (identică bit cu bit) folosită deja de altcineva / într-o altă sesizare
   const hashes = photos.map((f) => sha256(f.buffer));
-  const reused = await prisma.photo.findFirst({
-    where: { sha256: { in: hashes }, kind: "REPORT" },
-    select: { reportId: true, uploadedById: true },
-  });
+  const reused = hashes.length
+    ? await prisma.photo.findFirst({
+        where: { sha256: { in: hashes }, kind: "REPORT" },
+        select: { reportId: true, uploadedById: true },
+      })
+    : null;
   const reasons = [...result.reasons];
   let verdict = result.verdict;
   if (reused) {
@@ -138,6 +137,8 @@ async function verifyPhotosWithAi({ photos, title, description, categoryId, repo
   }
 
   return {
+    verdict,
+    reasons,
     severity: result.analysis?.severity,
     reportFields: {
       aiVerdict: verdict,
@@ -393,6 +394,7 @@ export async function createReport({ reporterId, title, description, categoryId,
     problem: withCode(report),
     duplicate: isDuplicate,
     parentCode: parentReport ? formatReportCode(parentReport.number) : null,
+    ai: { verdict: ai.verdict ?? "SKIPPED", reasons: ai.reasons ?? [] },
   };
 }
 

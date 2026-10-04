@@ -5,7 +5,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { inspectImage, sha256 } from "../../common/utils/image.js";
-import { analyzeReportPhotos } from "../ai/ai.service.js";
+import { analyzeReportPhotos, localTextCheck } from "../ai/ai.service.js";
 
 import {
   findNearbyOpenDuplicate,
@@ -95,11 +95,11 @@ async function removeStoredPhotos(photos) {
   );
 }
 
-// Rulează verificarea AI pe fotografiile încărcate. Aruncă 422 doar pentru conținut respins;
-// orice altă problemă (AI indisponibil etc.) dă verdict SKIPPED și sesizarea merge mai departe.
+// Verifică textul și fotografiile înainte de salvare. AI indisponibil dă SKIPPED;
+// un verdict REJECTED blochează sesizarea.
 async function verifyPhotosWithAi({ photos, title, description, categoryId, reporterId }) {
-  const empty = { severity: undefined, reportFields: {} };
-  if (!photos.length) return empty;
+  const local = localTextCheck(title, description);
+  if (local.rejected) throw new HttpError(422, local.reason);
 
   for (const file of photos) {
     const image = inspectImage(file.buffer);
@@ -122,10 +122,12 @@ async function verifyPhotosWithAi({ photos, title, description, categoryId, repo
 
   // Aceeași poză (identică bit cu bit) folosită deja de altcineva / într-o altă sesizare
   const hashes = photos.map((f) => sha256(f.buffer));
-  const reused = await prisma.photo.findFirst({
-    where: { sha256: { in: hashes }, kind: "REPORT" },
-    select: { reportId: true, uploadedById: true },
-  });
+  const reused = hashes.length
+    ? await prisma.photo.findFirst({
+        where: { sha256: { in: hashes }, kind: "REPORT" },
+        select: { reportId: true, uploadedById: true },
+      })
+    : null;
   const reasons = [...result.reasons];
   let verdict = result.verdict;
   if (reused) {

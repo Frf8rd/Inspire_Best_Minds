@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 const svc = await import("./src/features/ai/ai.service.js");
 const jpeg = Buffer.concat([Buffer.from([0xff,0xd8,0xff,0xe0]), Buffer.alloc(50)]);
 const cats = [{id:"c1",slug:"gropi",name:"Gropi"},{id:"c2",slug:"gunoi",name:"Gunoi"}];
-const good = {isAppropriate:true,showsUrbanIssue:true,isRealPhoto:true,imageQuality:"GOOD",matchesSelectedCategory:true,suggestedCategorySlug:null,severity:"HIGH",containsFaces:false,containsLicensePlates:false,confidence:0.9,summary:"O groapă adâncă."};
+const good = {isAppropriate:true,showsUrbanIssue:true,isRealPhoto:true,imageQuality:"GOOD",matchesSelectedCategory:true,textIsAppropriate:true,textIsMeaningful:true,textDescribesUrbanIssue:true,textMatchesPhoto:true,suggestedCategorySlug:null,severity:"HIGH",containsFaces:false,containsLicensePlates:false,confidence:0.9,summary:"O groapă adâncă."};
 const calls=[]; let plan={};
 globalThis.fetch = async (url, opts) => {
   calls.push(url);
@@ -20,6 +20,17 @@ clear(); assert.equal(svc.isAiEnabled(), false);
 let r = await svc.analyzeReportPhotos({images:[{buffer:jpeg}],categories:cats});
 assert.equal(r.verdict,"SKIPPED"); console.log("0 fara cheie -> SKIPPED OK");
 
+// 0a. verificarea locală respinge titlurile și descrierile aleatorii chiar fără AI
+for (const [title, description] of [
+  ["tgrfsead", ""], ["jyhftdg", "yftgd"], ["gsgefa", ""], ["dada", "gfd"], ["random app", ""],
+]) {
+  assert.equal(svc.localTextCheck(title, description).rejected, true, `${title} / ${description}`);
+  r = await svc.analyzeReportPhotos({ title, description, categories: cats });
+  assert.equal(r.verdict, "REJECTED", `${title} / ${description}`);
+}
+assert.equal(svc.localTextCheck("Groapă pe strada principală", "Asfaltul este deteriorat lângă stație.").rejected, false);
+console.log("0a texte aleatorii respinse local; raport valid acceptat OK");
+
 // 1. gemini
 clear(); process.env.GEMINI_API_KEY="k"; plan={"generativelanguage.googleapis.com":(o)=>{
   const b=JSON.parse(o.body); assert.equal(o.headers["x-goog-api-key"],"k");
@@ -28,6 +39,19 @@ clear(); process.env.GEMINI_API_KEY="k"; plan={"generativelanguage.googleapis.co
 r = await svc.analyzeReportPhotos({images:[{buffer:jpeg}],categories:cats,selectedCategoryId:"c1"});
 assert.equal(r.verdict,"VERIFIED"); assert.equal(r.provider,"gemini"); assert.equal(r.analysis.severity,"HIGH");
 console.log("1 gemini OK", svc.getAiStatus());
+
+// 1a. Gemini analizeaza textul si fara fotografii
+clear(); process.env.GEMINI_API_KEY="k"; plan={"generativelanguage.googleapis.com":(o)=>{
+  const b=JSON.parse(o.body);
+  assert.equal(b.contents[0].parts.length,1);
+  assert.match(b.contents[0].parts[0].text,/nu sunt atașate fotografii/i);
+  return ok({candidates:[{content:{parts:[{text:JSON.stringify(good)}]}}]});}};
+r = await svc.analyzeReportPhotos({images:[],title:"Groapă pe strada principală",description:"Asfaltul este deteriorat lângă stație.",categories:cats});
+assert.equal(r.verdict,"VERIFIED"); assert.equal(r.provider,"gemini");
+plan["generativelanguage.googleapis.com"]=(o)=>ok({candidates:[{content:{parts:[{text:JSON.stringify({...good,textIsMeaningful:false,textDescribesUrbanIssue:false,confidence:0.95})}]}}]});
+r = await svc.analyzeReportPhotos({images:[],title:"tgrfsead",description:"",categories:cats});
+assert.equal(r.verdict,"REJECTED");
+console.log("1a analiza textului fara fotografii OK");
 
 // 2. fallback gemini 429 -> groq
 clear(); process.env.GEMINI_API_KEY="k"; process.env.GROQ_API_KEY="g"; plan={

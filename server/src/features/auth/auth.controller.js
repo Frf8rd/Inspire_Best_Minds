@@ -119,7 +119,9 @@ export const googleCallback = async (req, res) => {
     }
 
     await issueSession(prisma, res, user);
-    return res.redirect(`${clientUrl}/auth/google/success`);
+
+    const userData = encodeURIComponent(JSON.stringify(toPublicJSON(user)));
+    return res.redirect(`${clientUrl}/auth/google/success?user=${userData}`);
   } catch (error) {
     console.error("Google callback error:", error);
     return res.redirect(`${clientUrl}/login?error=server_error`);

@@ -4,12 +4,6 @@ import { notificationsApi } from "../api/notifications.js";
 
 const AuthContext = createContext(null);
 
-function hasSessionCookies() {
-  return document.cookie.split("; ").some((cookie) =>
-    cookie.startsWith("accessToken=") || cookie.startsWith("refreshToken=")
-  );
-}
-
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -17,12 +11,8 @@ export function AuthProvider({ children }) {
 
   // Întoarce userul curent (sau null), ca apelanții să poată decide ce urmează.
   const fetchMe = async () => {
-    if (!hasSessionCookies()) {
-      setUser(null);
-      setLoading(false);
-      return null;
-    }
-
+    // Cookie-urile de sesiune sunt httpOnly, deci JavaScript nu le poate citi
+    // (document.cookie nu le conține). Lăsăm serverul să decidă prin /auth/me.
     try {
       const data = await authApi.getMe();
       setUser(data.user);

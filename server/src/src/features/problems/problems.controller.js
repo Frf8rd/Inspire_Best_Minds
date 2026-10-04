@@ -71,6 +71,7 @@ export const createProblemController = handle(async (req, res) => {
       message: `Există deja o sesizare similară în apropiere (${result.parentCode}). A fost grupată cu ea.`,
       duplicate: true,
       problem: result.problem,
+      ai: result.ai,
     });
   }
 
@@ -78,6 +79,7 @@ export const createProblemController = handle(async (req, res) => {
     message: "Sesizarea a fost creată cu succes.",
     duplicate: false,
     problem: result.problem,
+    ai: result.ai,
   });
 });
 

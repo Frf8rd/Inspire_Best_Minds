@@ -131,6 +131,9 @@ export function CreateProblemPage() {
         addToast("Această problemă a fost identificată ca duplicat și s-a înregistrat susținerea ta (+1)!", "info");
       } else {
         addToast(`Sesizarea ${res.problem.code} a fost creată cu succes!`, "success");
+        if (res.ai?.verdict === "FLAGGED") {
+          addToast(`Verificarea automată a marcat sesizarea pentru revizuire: ${res.ai.reasons.join(" ")}`, "warning");
+        }
         navigate(`/problems/${res.problem.id}`);
       }
     } catch (err) {

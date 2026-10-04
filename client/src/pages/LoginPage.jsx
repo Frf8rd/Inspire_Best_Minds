@@ -38,7 +38,6 @@ export function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  const googleAuthEnabled = import.meta.env.VITE_GOOGLE_AUTH_ENABLED === "true";
   const from = location.state?.from?.pathname || "/dashboard";
 
   const handleSubmit = async (e) => {
@@ -60,19 +59,20 @@ export function LoginPage() {
   };
 
   const handleGoogleLogin = async () => {
-    if (!googleAuthEnabled) {
-      addToast(GOOGLE_ERRORS.google_not_configured, "error");
-      return;
-    }
-
     const url = `${API_BASE_URL}/auth/google`;
     setGoogleLoading(true);
     try {
-      window.location.href = url;
+      // Dacă Google nu e configurat, backendul răspunde 503 cu JSON; evităm să afișăm JSON-ul brut.
+      const res = await fetch(url, { redirect: "manual", credentials: "include" });
+      if (res.status === 503) {
+        addToast(GOOGLE_ERRORS.google_not_configured, "error");
+        setGoogleLoading(false);
+        return;
+      }
     } catch {
-      addToast(GOOGLE_ERRORS.google_auth_failed, "error");
-      setGoogleLoading(false);
+      // Cererea de verificare a eșuat (CORS/rețea); încercăm oricum navigarea normală.
     }
+    window.location.href = url;
   };
 
   // Demo accounts helper
@@ -196,10 +196,9 @@ export function LoginPage() {
           onClick={handleGoogleLogin}
           className="btn btn-secondary"
           style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem" }}
-          disabled={googleLoading || !googleAuthEnabled}
-          title={googleAuthEnabled ? "Continuă cu Google" : "Google OAuth nu este configurat"}
+          disabled={googleLoading}
         >
-          <GoogleIcon /> {googleLoading ? "Se redirecționează..." : googleAuthEnabled ? "Continuă cu Google" : "Google indisponibil"}
+          <GoogleIcon /> {googleLoading ? "Se redirecționează..." : "Continuă cu Google"}
         </button>
 
         {/* Demo Accounts Quick Login */}
