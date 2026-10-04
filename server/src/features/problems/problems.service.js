@@ -5,7 +5,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { inspectImage, sha256 } from "../../common/utils/image.js";
-import { analyzeReportPhotos, localTextCheck } from "../ai/ai.service.js";
+import { analyzeReportPhotos, localTextCheck, isAiRequired } from "../ai/ai.service.js";
 
 import {
   findNearbyOpenDuplicate,
@@ -119,6 +119,10 @@ async function verifyPhotosWithAi({ photos, title, description, categoryId, repo
   if (result.verdict === "REJECTED") {
     throw new HttpError(422, result.reasons[0] || "Fotografiile au fost respinse de verificarea automată.");
   }
+  // Cu AI_REQUIRED=true nu acceptăm sesizări nemoderate când AI-ul nu poate rula.
+  if (result.verdict === "SKIPPED" && isAiRequired()) {
+    throw new HttpError(503, "Verificarea automată a sesizării este momentan indisponibilă. Încearcă din nou în câteva minute.");
+  }
 
   // Aceeași poză (identică bit cu bit) folosită deja de altcineva / într-o altă sesizare
   const hashes = photos.map((f) => sha256(f.buffer));
@@ -141,6 +145,8 @@ async function verifyPhotosWithAi({ photos, title, description, categoryId, repo
 
   return {
     severity: result.analysis?.severity,
+    verdict,
+    reasons,
     reportFields: {
       aiVerdict: verdict,
       aiSummary: result.analysis?.summary || (reasons[0] ?? null),
@@ -395,6 +401,7 @@ export async function createReport({ reporterId, title, description, categoryId,
     problem: withCode(report),
     duplicate: isDuplicate,
     parentCode: parentReport ? formatReportCode(parentReport.number) : null,
+    ai: { verdict: ai.verdict, reasons: ai.reasons },
   };
 }
 

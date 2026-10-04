@@ -20,10 +20,17 @@ import { inspectImage } from "../../common/utils/image.js";
 
 const MAX_TOTAL_IMAGE_BYTES = 12 * 1024 * 1024; // sub limita de ~20 MB a cererilor inline
 
+// GEMINI_MODEL poate conține mai multe modele separate prin virgulă ("model-principal,model-rezerva"):
+// dacă primul e supraîncărcat (503), se încearcă următorul.
+const geminiModels = () => {
+  const list = (process.env.GEMINI_MODEL || "gemini-2.5-flash").split(",").map((m) => m.trim()).filter(Boolean);
+  return list.length ? list : ["gemini-2.5-flash"];
+};
+
 const PROVIDERS = {
   gemini: {
     key: () => process.env.GEMINI_API_KEY,
-    model: () => process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    model: () => geminiModels()[0],
   },
   groq: {
     key: () => process.env.GROQ_API_KEY,
@@ -46,6 +53,10 @@ export function configuredProviders() {
   const order = forced && PROVIDERS[forced] ? [forced, ...AUTO_ORDER.filter((p) => p !== forced)] : AUTO_ORDER;
   return order.filter((name) => Boolean(PROVIDERS[name].key()));
 }
+
+// AI_REQUIRED=true: dacă verificarea AI nu este configurată sau pică, sesizarea NU se mai acceptă
+// nemoderată (în loc de SKIPPED + acceptare). Recomandat în producție, după ce setezi o cheie.
+export const isAiRequired = () => process.env.AI_REQUIRED === "true";
 
 export const isAiEnabled = () =>
   process.env.AI_VERIFICATION_ENABLED !== "false" && configuredProviders().length > 0;
@@ -191,12 +202,11 @@ export function localTextCheck(title = "", description = "") {
     reason: `Titlul sau descrierea nu par să descrie o problemă reală (${why}). Scrie pe scurt care este problema.`,
   });
   const fields = [t, String(description || "").trim()].filter(Boolean);
-  const vowels = /[aeiouăâîеёиоуыэюяіїє]/iu;
-  const validInitialClusters = new Set([
-    "bl", "br", "cl", "cr", "dr", "fl", "fr", "gl", "gr", "pl", "pr", "tr", "vr",
-    "sc", "sch", "scr", "scl", "sf", "sm", "sn", "sp", "spl", "spr", "st", "str",
-  ]);
+  // Vocale latine (cu diacritice românești) + chirilice: textele în rusă sunt acceptate.
+  const vowels = /[aeiouyăâîеёиоуыэюяіїє]/iu;
   const mash = /(asdf|sdfg|dfgh|fghj|ghjk|hjkl|qwer|wert|erty|rtyu|zxcv|xcvb|cvbn|jkjk|lkjh|fdsa)/iu;
+  // Cuvinte scurte legitime fără vocale (abrevieri frecvente în adrese și sesizări).
+  const allowedShort = new Set(["nr", "str", "bd", "bl", "ap", "sc", "tv", "cnp", "prl", "mcd"]);
 
   for (const field of fields) {
     const letters = field.replace(/[^\p{L}]/gu, "");
@@ -210,11 +220,11 @@ export function localTextCheck(title = "", description = "") {
 
     const words = normalized.split(/[^\p{L}]+/u).filter(Boolean);
     for (const word of words) {
+      if (allowedShort.has(word)) continue;
+      // Cuvinte de 4+ litere fără nicio vocală ("fghjk") sunt aproape sigur taste apăsate la întâmplare.
       if (word.length >= 4 && !vowels.test(word)) return fail("cuvinte fără vocale");
-      if (/^[bcdfghjklmnpqrstvwxz]{2}/iu.test(word) && !validInitialClusters.has(word.slice(0, 2))) {
-        return fail("cuvinte care par taste apăsate la întâmplare");
-      }
-      if (/[bcdfghjklmnpqrstvwxz]{4,}/iu.test(word)) return fail("secvențe de consoane fără sens");
+      // 5+ consoane la rând nu apar în română/rusă transliterată normal (ex.: "transport" are max. 3).
+      if (/[bcdfghjklmnpqrstvwxz]{5,}/iu.test(word)) return fail("secvențe de consoane fără sens");
     }
   }
   return { rejected: false };
@@ -247,9 +257,8 @@ async function postJson(url, headers, body) {
 const dataUrl = (img) => `data:${img.mimeType};base64,${img.buffer.toString("base64")}`;
 
 const callers = {
-  async gemini({ images, prompt }) {
-    const model = PROVIDERS.gemini.model();
-    const generationConfig = { temperature: 0, maxOutputTokens: 1500, responseMimeType: "application/json" };
+  async gemini({ images, prompt, model = PROVIDERS.gemini.model() }) {
+    const generationConfig = { temperature: 0, maxOutputTokens: 4000, responseMimeType: "application/json" };
     if (/2\.5-flash/.test(model)) generationConfig.thinkingConfig = { thinkingBudget: 0 };
     const data = await postJson(
       `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
@@ -342,18 +351,36 @@ const callers = {
  * Încearcă providerii configurați pe rând până când unul întoarce un JSON valid.
  * @returns {Promise<{ provider: string, parsed: object }>} sau aruncă dacă toți eșuează.
  */
+// Erorile temporare (supraîncărcare, limită de rată, timeout) merită reîncercate pe același provider.
+const isTransient = (error) =>
+  /^HTTP (429|500|502|503|504)\b/.test(error.message) || error.name === "AbortError";
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const MAX_ATTEMPTS = Number(process.env.AI_MAX_ATTEMPTS) || 3;
+
 async function askVision({ images, prompt }) {
   const providers = configuredProviders();
   let lastError = new Error("Niciun provider AI configurat.");
   for (const name of providers) {
-    try {
-      const raw = await callers[name]({ images, prompt });
-      const parsed = extractJson(raw);
-      if (!parsed) throw new Error("răspuns fără JSON valid");
-      return { provider: name, parsed };
-    } catch (error) {
-      lastError = error;
-      console.error(`[AI] Providerul "${name}" a eșuat: ${error.message}`);
+    const models = name === "gemini" ? geminiModels() : [undefined];
+    for (const model of models) {
+      const label = model ? `${name}/${model}` : name;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        try {
+          const raw = await callers[name]({ images, prompt, model });
+          const parsed = extractJson(raw);
+          if (!parsed) throw new Error("răspuns fără JSON valid");
+          return { provider: name, parsed };
+        } catch (error) {
+          lastError = error;
+          const retry = isTransient(error) && attempt < MAX_ATTEMPTS;
+          console.error(
+            `[AI] "${label}" a eșuat (încercarea ${attempt}/${MAX_ATTEMPTS}): ${error.message.replace(/\s+/g, " ").slice(0, 160)}` +
+              (retry ? " — reîncerc..." : "")
+          );
+          if (!retry) break;
+          await sleep(1000 * attempt * attempt); // 1s, 4s
+        }
+      }
     }
   }
   throw lastError;

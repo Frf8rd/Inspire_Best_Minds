@@ -30,6 +30,7 @@ export function CreateProblemPage() {
   const [previews, setPreviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [duplicateInfo, setDuplicateInfo] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
 
   useEffect(() => {
     async function loadCategories() {
@@ -110,6 +111,7 @@ export function CreateProblemPage() {
 
     setLoading(true);
     setDuplicateInfo(null);
+    setSubmitError(null);
 
     const formData = new FormData();
     formData.append("title", title.trim());
@@ -137,7 +139,15 @@ export function CreateProblemPage() {
         navigate(`/problems/${res.problem.id}`);
       }
     } catch (err) {
-      addToast(err.message || "Eroare la transmiterea sesizării.", "error");
+      const message = err.message || "Eroare la transmiterea sesizării.";
+      // 422 = sesizarea a fost respinsă de verificarea automată (text sau foto): o arătăm clar în formular.
+      if (err.status === 422) {
+        setSubmitError({ title: "Sesizarea nu a fost acceptată", message });
+      } else if (err.status === 401) {
+        setSubmitError({ title: "Sesiunea a expirat", message: "Autentifică-te din nou și retrimite sesizarea." });
+      } else {
+        addToast(message, "error");
+      }
     } finally {
       setLoading(false);
     }
@@ -179,6 +189,19 @@ export function CreateProblemPage() {
             >
               <CheckCircle2 size={16} /> Vezi problema existentă ({duplicateInfo.parentCode})
             </button>
+          </div>
+        )}
+
+        {submitError && (
+          <div
+            role="alert"
+            className="card animate-fade-in"
+            style={{ padding: "1.25rem 1.5rem", marginBottom: "1.5rem", backgroundColor: "#fef2f2", borderColor: "#fca5a5" }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#b91c1c", fontWeight: 700, marginBottom: "0.25rem" }}>
+              <AlertTriangle size={20} /> {submitError.title}
+            </div>
+            <p style={{ color: "#991b1b", fontSize: "0.9rem", margin: 0 }}>{submitError.message}</p>
           </div>
         )}
 
