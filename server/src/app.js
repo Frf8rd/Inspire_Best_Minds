@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import passport from "./config/passport.js";
 import routes from "./routes.js";
 import path from "node:path";
@@ -9,6 +10,10 @@ import path from "node:path";
 const app = express();
 
 const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+
+// Antete de securitate. "cross-origin" la resurse, ca frontendul (alt port/domeniu)
+// să poată afișa fotografiile din /uploads.
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 
 app.use(
   cors({

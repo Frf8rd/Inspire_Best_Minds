@@ -43,7 +43,9 @@ const listSelect = {
   department: { select: { id: true, name: true, institutionId: true } },
 };
 
+// Variantă publică (servită static prin /uploads) și original privat (NU e servit static).
 const uploadsDirectory = path.resolve(process.cwd(), "uploads", "reports");
+const privateDirectory = path.resolve(process.cwd(), "private-uploads", "reports");
 
 function inspectImage(buffer) {
   if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
@@ -65,9 +67,14 @@ function inspectImage(buffer) {
   return null;
 }
 
-async function storePhotos(files, reportId, uploadedById) {
+// Salvează fișierele pe disc ÎNAINTE de tranzacția DB și întoarce rândurile pentru Photo
+// (fără reportId, care se adaugă în tranzacție). Originalul merge într-un folder privat,
+// iar în /uploads ajunge doar copia publică. (Blur-ul pentru fețe/numere se poate adăuga
+// aici, între cele două scrieri, fără alte modificări.)
+async function storePhotos(files, uploadedById) {
   if (!files.length) return [];
   await mkdir(uploadsDirectory, { recursive: true });
+  await mkdir(privateDirectory, { recursive: true });
   const stored = [];
   try {
     for (const file of files) {
@@ -77,29 +84,32 @@ async function storePhotos(files, reportId, uploadedById) {
         throw new HttpError(400, "Conținutul unei fotografii nu corespunde unui JPEG, PNG sau WebP valid.");
       }
       const filename = `${crypto.randomUUID()}.${image.extension}`;
-      const relativePath = path.posix.join("uploads", "reports", filename);
-      await writeFile(path.join(uploadsDirectory, filename), file.buffer, { flag: "wx" });
-      stored.push({
-        reportId,
+      const photo = {
         uploadedById,
-        originalPath: relativePath,
-        publicPath: `/${relativePath}`,
+        originalPath: path.posix.join("private-uploads", "reports", filename),
+        publicPath: `/${path.posix.join("uploads", "reports", filename)}`,
         sha256: crypto.createHash("sha256").update(file.buffer).digest("hex"),
         sizeBytes: file.size,
-      });
+      };
+      // Îl adăugăm înainte de scriere, ca la eroare să curățăm și fișierele parțiale.
+      stored.push(photo);
+      await writeFile(path.join(privateDirectory, filename), file.buffer, { flag: "wx" });
+      await writeFile(path.join(uploadsDirectory, filename), file.buffer, { flag: "wx" });
     }
     return stored;
   } catch (error) {
-    await Promise.allSettled(
-      stored.map((photo) => unlink(path.join(process.cwd(), photo.originalPath)))
-    );
+    await removeStoredPhotos(stored);
     throw error;
   }
 }
 
 async function removeStoredPhotos(photos) {
+  const paths = photos.flatMap((photo) => [
+    photo.originalPath,
+    photo.publicPath ? photo.publicPath.replace(/^\//, "") : null,
+  ]);
   await Promise.allSettled(
-    photos.map((photo) => unlink(path.join(process.cwd(), photo.originalPath)))
+    [...new Set(paths.filter(Boolean))].map((relative) => unlink(path.join(process.cwd(), relative)))
   );
 }
 
@@ -206,7 +216,9 @@ export async function createReport({ reporterId, title, description, categoryId,
         categorySlug: category.slug,
       });
 
-  let savedPhotos = [];
+  // Fotografiile se validează și se salvează înainte de tranzacție; în tranzacție se scriu
+  // doar rândurile din DB. Dacă ceva eșuează, se anulează tot (inclusiv +1 la părinte).
+  const savedPhotos = await storePhotos(photos, reporterId);
   let report;
   try {
     report = await prisma.$transaction(async (tx) => {
@@ -261,16 +273,16 @@ export async function createReport({ reporterId, title, description, categoryId,
         });
       }
 
+      if (savedPhotos.length) {
+        await tx.photo.createMany({
+          data: savedPhotos.map((photo) => ({ ...photo, reportId: created.id })),
+        });
+      }
+
       return created;
     });
-
-    savedPhotos = await storePhotos(photos, report.id, reporterId);
-    if (savedPhotos.length) {
-      await prisma.photo.createMany({ data: savedPhotos });
-    }
   } catch (error) {
-    if (savedPhotos.length) await removeStoredPhotos(savedPhotos);
-    if (report) await prisma.report.delete({ where: { id: report.id } }).catch(() => undefined);
+    await removeStoredPhotos(savedPhotos);
     throw error;
   }
 
@@ -376,7 +388,7 @@ export async function deleteReport({ reportId, actor }) {
 
   const photos = await prisma.photo.findMany({
     where: { reportId },
-    select: { originalPath: true },
+    select: { originalPath: true, publicPath: true },
   });
 
   await prisma.$transaction(async (tx) => {
@@ -832,4 +844,33 @@ export async function changeStatus({ reportId, actor, toStatus, comment, assigne
   }
 
   return formatted;
+}
+
+/**
+ * Calea pe disc a pozei ORIGINALE. Accesibilă doar autorului sesizării, adminului
+ * și personalului (STAFF) din instituția responsabilă.
+ */
+export async function getOriginalPhotoPath({ reportId, photoId, actor }) {
+  const photo = await prisma.photo.findFirst({
+    where: { id: photoId, reportId },
+    select: {
+      originalPath: true,
+      report: {
+        select: { reporterId: true, department: { select: { institutionId: true } } },
+      },
+    },
+  });
+  if (!photo) throw new HttpError(404, "Fotografia nu există.");
+
+  let allowed = actor.role === "ADMIN" || photo.report.reporterId === actor.id;
+  const institutionId = photo.report.department?.institutionId;
+  if (!allowed && actor.role === "STAFF" && institutionId) {
+    const membership = await prisma.membership.findUnique({
+      where: { userId_institutionId: { userId: actor.id, institutionId } },
+    });
+    allowed = Boolean(membership);
+  }
+  if (!allowed) throw new HttpError(403, "Nu ai acces la fotografia originală.");
+
+  return path.resolve(process.cwd(), photo.originalPath);
 }

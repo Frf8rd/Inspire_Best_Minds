@@ -14,6 +14,7 @@ import {
   historyController,
   toggleSupportController,
   confirmResolutionController,
+  originalPhotoController,
 } from "./problems.controller.js";
 import {
   listCommentsController,
@@ -40,6 +41,8 @@ router.get("/:id", optionalAuth, getProblemController);
 router.get("/:id/history", optionalAuth, historyController);
 router.get("/:id/comments", optionalAuth, listCommentsController);
 router.get("/:id/complaints", optionalAuth, listComplaintsController);
+// Poza originală (privată): doar autor, admin, STAFF din instituția responsabilă
+router.get("/:id/photos/:photoId/original", protect, originalPhotoController);
 
 // Acțiuni protejate pe sesizări (creare, editare, susținere, status, comentarii)
 router.post("/", protect, uploadProblemPhotos, createProblemController);

@@ -93,6 +93,10 @@ export const listProblemsController = handle(async (req, res) => {
     throw new HttpError(400, "Prioritate invalidă.");
   }
 
+  if (req.query.mine === "true" && !req.user) {
+    throw new HttpError(401, "Trebuie să fii autentificat pentru a vedea sesizările tale.");
+  }
+
   const result = await service.listReports({
     status: status || undefined,
     category: str(req.query.categoryId || req.query.category) || undefined,
@@ -245,5 +249,18 @@ export const confirmResolutionController = handle(async (req, res) => {
       ? "Rezolvarea sesizării a fost confirmată."
       : "Rezolvarea a fost infirmată; sesizarea a fost redeschisă.",
     problem,
+  });
+});
+
+export const originalPhotoController = handle(async (req, res) => {
+  const filePath = await service.getOriginalPhotoPath({
+    reportId: req.params.id,
+    photoId: req.params.photoId,
+    actor: req.user,
+  });
+  res.sendFile(filePath, (error) => {
+    if (error && !res.headersSent) {
+      res.status(404).json({ message: "Fișierul nu a fost găsit." });
+    }
   });
 });

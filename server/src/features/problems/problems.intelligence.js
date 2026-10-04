@@ -53,6 +53,7 @@ export async function findNearbyOpenDuplicate({
       latitude: true,
       longitude: true,
       supportCount: true,
+      createdAt: true, // necesar pentru recalcularea corectă a priorității părintelui
     },
   });
 
@@ -272,5 +273,4 @@ export function startPriorityRecalculationJob(intervalMs = 60 * 60 * 1000) {
   }, intervalMs);
   timer.unref();
   return timer;
-}
-
+} 
