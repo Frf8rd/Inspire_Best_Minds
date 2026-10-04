@@ -11,7 +11,9 @@ import { inspectImage } from "../../common/utils/image.js";
  *
  * Variabile de mediu:
  *   AI_PROVIDER             forțează un provider (gemini|groq|openrouter|anthropic); implicit auto
- *   GEMINI_MODEL / GROQ_MODEL / OPENROUTER_MODEL / ANTHROPIC_MODEL   modelul per provider
+ *   GEMINI_MODEL / GROQ_MODEL / OPENROUTER_MODEL / ANTHROPIC_MODEL   modelul per provider;
+ *                           fiecare acceptă mai multe modele separate prin virgulă (\"principal,rezerva1,rezerva2\")
+ *   AI_COOLDOWN_MS          cât timp (ms) sărim peste un model care a dat 429/404 (implicit 300000 = 5 min)
  *   AI_REJECT_CONFIDENCE    prag (0-1) peste care pozele evident nepotrivite sunt respinse (implicit 0.85)
  *   AI_TIMEOUT_MS           timeout per cerere (implicit 25000)
  *   AI_VERIFICATION_ENABLED "false" dezactivează complet verificarea
@@ -20,31 +22,32 @@ import { inspectImage } from "../../common/utils/image.js";
 
 const MAX_TOTAL_IMAGE_BYTES = 12 * 1024 * 1024; // sub limita de ~20 MB a cererilor inline
 
-// GEMINI_MODEL poate conține mai multe modele separate prin virgulă ("model-principal,model-rezerva"):
-// dacă primul e supraîncărcat (503), se încearcă următorul.
-const geminiModels = () => {
-  const list = (process.env.GEMINI_MODEL || "gemini-2.5-flash").split(",").map((m) => m.trim()).filter(Boolean);
-  return list.length ? list : ["gemini-2.5-flash"];
+// Fiecare *_MODEL poate conține mai multe modele separate prin virgulă ("model-principal,model-rezerva"):
+// dacă primul e supraîncărcat (503) sau are cota depășită (429), se încearcă următorul.
+const modelList = (envName, defaults) => {
+  const list = (process.env[envName] || defaults).split(",").map((m) => m.trim()).filter(Boolean);
+  return list.length ? list : defaults.split(",");
 };
 
 const PROVIDERS = {
   gemini: {
     key: () => process.env.GEMINI_API_KEY,
-    model: () => geminiModels()[0],
+    models: () => modelList("GEMINI_MODEL", "gemini-2.5-flash"),
   },
   groq: {
     key: () => process.env.GROQ_API_KEY,
-    model: () => process.env.GROQ_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct",
+    models: () => modelList("GROQ_MODEL", "qwen/qwen3.8-27b"),
   },
   openrouter: {
     key: () => process.env.OPENROUTER_API_KEY,
-    model: () => process.env.OPENROUTER_MODEL || "google/gemma-3-27b-it:free",
+    models: () => modelList("OPENROUTER_MODEL", "google/gemma-3-27b-it:free"),
   },
   anthropic: {
     key: () => process.env.ANTHROPIC_API_KEY,
-    model: () => process.env.ANTHROPIC_MODEL || "claude-haiku-4-5",
+    models: () => modelList("ANTHROPIC_MODEL", "claude-haiku-4-5"),
   },
 };
+for (const provider of Object.values(PROVIDERS)) provider.model = () => provider.models()[0];
 const AUTO_ORDER = ["gemini", "groq", "openrouter", "anthropic"];
 
 // Lista providerilor configurați, în ordinea în care vor fi încercați.
@@ -279,14 +282,14 @@ const callers = {
   },
 
   // Groq și OpenRouter folosesc formatul compatibil OpenAI
-  async groq({ images, prompt }) {
+  async groq({ images, prompt, model = PROVIDERS.groq.model() }) {
     const data = await postJson(
       "https://api.groq.com/openai/v1/chat/completions",
       { authorization: `Bearer ${process.env.GROQ_API_KEY}` },
       {
-        model: PROVIDERS.groq.model(),
+        model,
         temperature: 0,
-        max_tokens: 900,
+        max_tokens: 2500,
         response_format: { type: "json_object" },
         messages: [{
           role: "user",
@@ -300,7 +303,7 @@ const callers = {
     return data.choices?.[0]?.message?.content ?? "";
   },
 
-  async openrouter({ images, prompt }) {
+  async openrouter({ images, prompt, model = PROVIDERS.openrouter.model() }) {
     const data = await postJson(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -308,7 +311,7 @@ const callers = {
         "x-title": "UrbanPulse",
       },
       {
-        model: PROVIDERS.openrouter.model(),
+        model,
         temperature: 0,
         max_tokens: 900,
         messages: [{
@@ -323,12 +326,12 @@ const callers = {
     return data.choices?.[0]?.message?.content ?? "";
   },
 
-  async anthropic({ images, prompt }) {
+  async anthropic({ images, prompt, model = PROVIDERS.anthropic.model() }) {
     const data = await postJson(
       "https://api.anthropic.com/v1/messages",
       { "x-api-key": process.env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01" },
       {
-        model: PROVIDERS.anthropic.model(),
+        model,
         max_tokens: 700,
         temperature: 0,
         messages: [{
@@ -351,36 +354,71 @@ const callers = {
  * Încearcă providerii configurați pe rând până când unul întoarce un JSON valid.
  * @returns {Promise<{ provider: string, parsed: object }>} sau aruncă dacă toți eșuează.
  */
-// Erorile temporare (supraîncărcare, limită de rată, timeout) merită reîncercate pe același provider.
+// 503/500/timeout = temporar, merită reîncercat pe același model (cu backoff).
 const isTransient = (error) =>
-  /^HTTP (429|500|502|503|504)\b/.test(error.message) || error.name === "AbortError";
+  /^HTTP (500|502|503|504)\b/.test(error.message) || error.name === "AbortError";
+// 429 = cota/limita depășită: a doua încercare pe același model nu ajută, trecem la următorul.
+// 404 = model inexistent/retras: la fel, trecem mai departe.
+const shouldSkipModel = (error) => /^HTTP (429|404)\b/.test(error.message);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const MAX_ATTEMPTS = Number(process.env.AI_MAX_ATTEMPTS) || 3;
+const MAX_ATTEMPTS = Number(process.env.AI_MAX_ATTEMPTS) || 2;
+// Buget total pentru tot lanțul: utilizatorul așteaptă răspunsul, deci nu mai încercăm la nesfârșit.
+const TOTAL_BUDGET_MS = Number(process.env.AI_TOTAL_BUDGET_MS) || 45000;
+const COOLDOWN_MS = Number(process.env.AI_COOLDOWN_MS) || 5 * 60 * 1000; // după 429/404
+const TRANSIENT_COOLDOWN_MS = Number(process.env.AI_TRANSIENT_COOLDOWN_MS) || 60 * 1000; // după 503/timeout repetat
+
+// "provider/model" -> timestamp până când îl sărim (ca să nu lovim la fiecare cerere un model blocat).
+const cooldowns = new Map();
+const inCooldown = (label) => (cooldowns.get(label) ?? 0) > Date.now();
 
 async function askVision({ images, prompt }) {
   const providers = configuredProviders();
   let lastError = new Error("Niciun provider AI configurat.");
-  for (const name of providers) {
-    const models = name === "gemini" ? geminiModels() : [undefined];
-    for (const model of models) {
-      const label = model ? `${name}/${model}` : name;
-      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-        try {
-          const raw = await callers[name]({ images, prompt, model });
-          const parsed = extractJson(raw);
-          if (!parsed) throw new Error("răspuns fără JSON valid");
-          return { provider: name, parsed };
-        } catch (error) {
-          lastError = error;
-          const retry = isTransient(error) && attempt < MAX_ATTEMPTS;
-          console.error(
-            `[AI] "${label}" a eșuat (încercarea ${attempt}/${MAX_ATTEMPTS}): ${error.message.replace(/\s+/g, " ").slice(0, 160)}` +
-              (retry ? " — reîncerc..." : "")
-          );
-          if (!retry) break;
-          await sleep(1000 * attempt * attempt); // 1s, 4s
-        }
+
+  // Lista plată (provider, model) în ordinea de încercare.
+  const all = providers.flatMap((name) => PROVIDERS[name].models().map((model) => ({ name, model })));
+  // Modelele aflate în cooldown merg la coadă (nu sunt excluse: dacă toate sunt blocate, tot încercăm).
+  const queue = [
+    ...all.filter((x) => !inCooldown(`${x.name}/${x.model}`)),
+    ...all.filter((x) => inCooldown(`${x.name}/${x.model}`)),
+  ];
+
+  const deadline = Date.now() + TOTAL_BUDGET_MS;
+  while (queue.length) {
+    if (Date.now() >= deadline) {
+      console.error("[AI] Bugetul de timp a fost depășit, renunț la restul modelelor.");
+      break;
+    }
+    const { name, model } = queue.shift();
+    const label = `${name}/${model}`;
+    let providerDown = false;
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      try {
+        const raw = await callers[name]({ images, prompt, model });
+        const parsed = extractJson(raw);
+        if (!parsed) throw new Error("răspuns fără JSON valid");
+        cooldowns.delete(label);
+        return { provider: name, model, parsed };
+      } catch (error) {
+        lastError = error;
+        const transient = isTransient(error);
+        const retry = transient && attempt < MAX_ATTEMPTS && Date.now() < deadline;
+        if (shouldSkipModel(error)) cooldowns.set(label, Date.now() + COOLDOWN_MS);
+        if (transient && !retry) providerDown = true;
+        console.error(
+          `[AI] "${label}" a eșuat (încercarea ${attempt}/${MAX_ATTEMPTS}): ${error.message.replace(/\s+/g, " ").slice(0, 160)}` +
+            (retry ? " — reîncerc..." : " — trec la următorul model")
+        );
+        if (!retry) break;
+        await sleep(1000 * attempt + Math.random() * 500); // ~1s + jitter
       }
+    }
+    // 503/timeout repetat = providerul e probabil supraîncărcat pentru toate modelele lui:
+    // trecem întâi la ceilalți provideri, iar modelele rămase ale acestuia merg la coadă.
+    if (providerDown) {
+      for (const x of all.filter((m) => m.name === name)) cooldowns.set(`${x.name}/${x.model}`, Date.now() + TRANSIENT_COOLDOWN_MS);
+      const same = queue.filter((x) => x.name === name);
+      queue.splice(0, queue.length, ...queue.filter((x) => x.name !== name), ...same);
     }
   }
   throw lastError;

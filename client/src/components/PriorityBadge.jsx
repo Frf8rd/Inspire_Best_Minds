@@ -23,7 +23,7 @@ export function PriorityBadge({ priority, score }) {
       <Icon size={12} />
       <span>{config.label}</span>
       {score !== undefined && (
-        <span style={{ opacity: 0.8, fontSize: "0.7em", marginLeft: "2px" }}>
+        <span style={{ opacity: 0.8, fontSize: "0.83em", marginLeft: "2px" }}>
           ({score})
         </span>
       )}

@@ -82,7 +82,7 @@ export function MapPage() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
           <select
             className="form-select"
-            style={{ width: "auto", fontSize: "0.85rem" }}
+            style={{ width: "auto", fontSize: "1rem" }}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
@@ -96,7 +96,7 @@ export function MapPage() {
 
           <select
             className="form-select"
-            style={{ width: "auto", fontSize: "0.85rem" }}
+            style={{ width: "auto", fontSize: "1rem" }}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -109,7 +109,7 @@ export function MapPage() {
 
           <select
             className="form-select"
-            style={{ width: "auto", fontSize: "0.85rem" }}
+            style={{ width: "auto", fontSize: "1rem" }}
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
           >
@@ -134,7 +134,7 @@ export function MapPage() {
           )}
         </div>
 
-        <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b" }}>
+        <div style={{ fontSize: "1rem", fontWeight: 600, color: "#64748b" }}>
           {problems.length} sesizări în zona vizibilă
         </div>
       </div>
@@ -175,8 +175,8 @@ export function MapPage() {
               </button>
             </div>
 
-            <h3 style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>{selectedProblem.title}</h3>
-            <p style={{ fontSize: "0.85rem", color: "#64748b", marginBottom: "0.75rem" }}>
+            <h3 style={{ fontSize: "1.3rem", marginBottom: "0.5rem" }}>{selectedProblem.title}</h3>
+            <p style={{ fontSize: "1rem", color: "#64748b", marginBottom: "0.75rem" }}>
               {selectedProblem.address || "Nesemnată"}
             </p>
 

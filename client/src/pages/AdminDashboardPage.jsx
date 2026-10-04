@@ -25,20 +25,17 @@ import {
   GitMerge,
   BarChart3,
   Plus,
-  Edit,
   Trash2,
-  CheckCircle2,
-  XCircle,
   UserCheck,
   UserX,
 } from "lucide-react";
 
 const STATUS_COLORS = {
-  NEW: "#3b82f6",
-  IN_PROGRESS: "#eab308",
-  RESOLVED: "#10b981",
-  REJECTED: "#64748b",
-  DUPLICATE: "#94a3b8",
+  NEW: "#45945b",
+  IN_PROGRESS: "#9cba62",
+  RESOLVED: "#277848",
+  REJECTED: "#7d8b80",
+  DUPLICATE: "#b0c5b3",
 };
 
 export function AdminDashboardPage() {
@@ -124,6 +121,20 @@ export function AdminDashboardPage() {
       loadAdminData();
     } catch (err) {
       addToast(err.message || "Eroare la Schimbarea statusului utilizatorului.", "error");
+    }
+  };
+
+  const handleMembershipRoleChange = async (user, membership, role) => {
+    try {
+      await institutionsApi.addMember(membership.institution.id, {
+        userId: user.id,
+        departmentId: membership.department?.id,
+        role,
+      });
+      addToast(`Rolul staff pentru ${user.name} a fost actualizat.`, "success");
+      await loadAdminData();
+    } catch (err) {
+      addToast(err.message || "Eroare la actualizarea rolului staff.", "error");
     }
   };
 
@@ -229,53 +240,47 @@ export function AdminDashboardPage() {
     : [];
 
   return (
-    <div className="container-custom" style={{ padding: "2.5rem 1.5rem" }}>
-      {/* Title Header */}
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <Shield size={28} style={{ color: "#2563eb" }} /> Panou de Administrare Sistem
-        </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
-          Control complet asupra utilizatorilor, instituțiilor, categoriilor și regulilor de rutare automată.
-        </p>
-      </div>
+    <main className="container-custom admin-dashboard">
+      <header className="admin-hero">
+        <div className="admin-hero-icon"><Shield size={25} /></div>
+        <div className="admin-hero-copy">
+          <span className="admin-eyebrow">Spațiu de administrare</span>
+          <h1>Panou de Administrare</h1>
+          <p>Gestionează utilizatorii, instituțiile, categoriile și regulile de rutare dintr-un singur loc.</p>
+        </div>
+        <div className="admin-hero-status"><span /> Sistem operațional</div>
+      </header>
 
       {/* Admin Tabs */}
-      <div
-        style={{
-          display: "flex",
-          gap: "0.75rem",
-          marginBottom: "2rem",
-          borderBottom: "1px solid var(--border-color)",
-          paddingBottom: "0.5rem",
-          overflowX: "auto",
-        }}
-      >
-        <button onClick={() => setActiveTab("overview")} className={`btn btn-sm ${activeTab === "overview" ? "btn-primary" : "btn-secondary"}`}>
+      <nav className="admin-tabs" role="tablist" aria-label="Secțiuni de administrare">
+        <button type="button" role="tab" aria-selected={activeTab === "overview"} onClick={() => setActiveTab("overview")} className={`admin-tab ${activeTab === "overview" ? "is-active" : ""}`}>
           <BarChart3 size={16} /> Statistici Sistem
         </button>
-        <button onClick={() => setActiveTab("users")} className={`btn btn-sm ${activeTab === "users" ? "btn-primary" : "btn-secondary"}`}>
-          <Users size={16} /> Utilizatori ({users.length})
+        <button type="button" role="tab" aria-selected={activeTab === "users"} onClick={() => setActiveTab("users")} className={`admin-tab ${activeTab === "users" ? "is-active" : ""}`}>
+          <Users size={16} /> Utilizatori <span>{users.length}</span>
         </button>
-        <button onClick={() => setActiveTab("categories")} className={`btn btn-sm ${activeTab === "categories" ? "btn-primary" : "btn-secondary"}`}>
-          <Layers size={16} /> Categorii ({categories.length})
+        <button type="button" role="tab" aria-selected={activeTab === "categories"} onClick={() => setActiveTab("categories")} className={`admin-tab ${activeTab === "categories" ? "is-active" : ""}`}>
+          <Layers size={16} /> Categorii <span>{categories.length}</span>
         </button>
-        <button onClick={() => setActiveTab("institutions")} className={`btn btn-sm ${activeTab === "institutions" ? "btn-primary" : "btn-secondary"}`}>
-          <Building size={16} /> Instituții ({institutions.length})
+        <button type="button" role="tab" aria-selected={activeTab === "institutions"} onClick={() => setActiveTab("institutions")} className={`admin-tab ${activeTab === "institutions" ? "is-active" : ""}`}>
+          <Building size={16} /> Instituții <span>{institutions.length}</span>
         </button>
-        <button onClick={() => setActiveTab("routing")} className={`btn btn-sm ${activeTab === "routing" ? "btn-primary" : "btn-secondary"}`}>
-          <GitMerge size={16} /> Reguli Rutare ({routingRules.length})
+        <button type="button" role="tab" aria-selected={activeTab === "routing"} onClick={() => setActiveTab("routing")} className={`admin-tab ${activeTab === "routing" ? "is-active" : ""}`}>
+          <GitMerge size={16} /> Reguli Rutare <span>{routingRules.length}</span>
         </button>
-      </div>
+      </nav>
 
       {/* TAB 1: OVERVIEW & CHARTS */}
       {activeTab === "overview" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "1.5rem" }}>
+        <section className="admin-overview" role="tabpanel">
+          <div className="admin-chart-grid">
             {/* Status Pie Chart */}
-            <div className="card" style={{ padding: "1.5rem" }}>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "1rem" }}>Sesizări după Status</h3>
-              <div style={{ width: "100%", height: 260 }}>
+            <article className="card admin-chart-card">
+              <div className="admin-chart-heading">
+                <span className="admin-chart-icon"><Layers size={17} /></span>
+                <div><h3>Sesizări după status</h3><p>Starea curentă a sesizărilor din sistem</p></div>
+              </div>
+              <div className="admin-chart-canvas">
                 <ResponsiveContainer>
                   <PieChart>
                     <Pie data={statusPieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
@@ -283,42 +288,48 @@ export function AdminDashboardPage() {
                         <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.name] || "#3b82f6"} />
                       ))}
                     </Pie>
-                    <Tooltip />
-                    <Legend />
+                    <Tooltip contentStyle={{ backgroundColor: "var(--admin-chart-tooltip-bg)", borderColor: "var(--admin-chart-border)", borderRadius: 10, color: "var(--admin-chart-text)" }} />
+                    <Legend wrapperStyle={{ color: "var(--admin-chart-text)", fontSize: 11 }} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </article>
 
             {/* Priority Bar Chart */}
-            <div className="card" style={{ padding: "1.5rem" }}>
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "1rem" }}>Distribuție Priorități Active</h3>
-              <div style={{ width: "100%", height: 260 }}>
+            <article className="card admin-chart-card">
+              <div className="admin-chart-heading">
+                <span className="admin-chart-icon"><BarChart3 size={17} /></span>
+                <div><h3>Priorități active</h3><p>Distribuția sesizărilor după prioritate</p></div>
+              </div>
+              <div className="admin-chart-canvas">
                 <ResponsiveContainer>
                   <BarChart data={priorityBarData}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="Count" fill="#2563eb" radius={[6, 6, 0, 0]} />
+                    <XAxis dataKey="name" tick={{ fill: "var(--admin-chart-tick)", fontSize: 11 }} axisLine={{ stroke: "var(--admin-chart-border)" }} tickLine={false} />
+                    <YAxis tick={{ fill: "var(--admin-chart-tick)", fontSize: 11 }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ backgroundColor: "var(--admin-chart-tooltip-bg)", borderColor: "var(--admin-chart-border)", borderRadius: 10, color: "var(--admin-chart-text)" }} />
+                    <Bar dataKey="Count" fill="#45945b" radius={[6, 6, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </div>
+            </article>
           </div>
-        </div>
+        </section>
       )}
 
       {/* TAB 2: USERS MANAGEMENT */}
       {activeTab === "users" && (
-        <div className="card" style={{ padding: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem" }}>Administrare Utilizatori</h2>
-          <div style={{ overflowX: "auto" }}>
-            <table className="custom-table">
+        <section className="card admin-management-card" role="tabpanel">
+          <div className="admin-section-heading">
+            <div><h2>Administrare utilizatori</h2><p>Roluri de platformă și atribuții în echipele instituțiilor</p></div>
+          </div>
+          <div className="admin-table-wrap">
+            <table className="custom-table admin-table">
               <thead>
                 <tr>
                   <th>Nume</th>
                   <th>Email</th>
                   <th>Rol Curent</th>
+                  <th>Roluri staff</th>
                   <th>Status Cont</th>
                   <th>Acțiuni</th>
                 </tr>
@@ -326,12 +337,11 @@ export function AdminDashboardPage() {
               <tbody>
                 {users.map((u) => (
                   <tr key={u.id}>
-                    <td style={{ fontWeight: 600 }}>{u.name}</td>
-                    <td>{u.email}</td>
+                    <td className="admin-primary-cell">{u.name}</td>
+                    <td className="admin-muted-cell">{u.email}</td>
                     <td>
                       <select
-                        className="form-select"
-                        style={{ width: "auto", fontSize: "0.8rem", padding: "4px 8px" }}
+                        className="form-select admin-role-select"
                         value={u.role}
                         onChange={(e) => handleRoleChange(u.id, e.target.value)}
                       >
@@ -341,14 +351,36 @@ export function AdminDashboardPage() {
                       </select>
                     </td>
                     <td>
-                      <span className="badge" style={{ backgroundColor: u.isActive ? "#dcfce7" : "#fee2e2", color: u.isActive ? "#166534" : "#dc2626" }}>
+                      {u.memberships?.length ? (
+                        <div className="admin-user-memberships">
+                          {u.memberships.map((membership) => (
+                            <label className="admin-user-membership" key={membership.id}>
+                              <span title={membership.institution.name}>{membership.institution.name}</span>
+                              <select
+                                className="form-select admin-membership-role-select"
+                                value={membership.role}
+                                aria-label={`Rolul lui ${u.name} la ${membership.institution.name}`}
+                                onChange={(e) => handleMembershipRoleChange(u, membership, e.target.value)}
+                              >
+                                <option value="HANDLER">Staff operator</option>
+                                <option value="MANAGER">Staff manager</option>
+                              </select>
+                            </label>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="admin-no-membership">Fără rol staff</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`badge admin-status-badge ${u.isActive ? "is-active" : "is-inactive"}`}>
                         {u.isActive ? "Activ" : "Inactiv"}
                       </span>
                     </td>
                     <td>
                       <button
                         onClick={() => handleStatusToggle(u.id, u.isActive)}
-                        className={`btn btn-sm ${u.isActive ? "btn-danger" : "btn-success"}`}
+                        className={`btn btn-sm admin-row-action ${u.isActive ? "is-danger" : "is-success"}`}
                       >
                         {u.isActive ? <UserX size={14} /> : <UserCheck size={14} />}
                         {u.isActive ? "Dezactivează" : "Activează"}
@@ -359,20 +391,20 @@ export function AdminDashboardPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </section>
       )}
 
       {/* TAB 3: CATEGORIES MANAGEMENT */}
       {activeTab === "categories" && (
-        <div className="card" style={{ padding: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h2 style={{ fontSize: "1.25rem" }}>Categorii de Probleme</h2>
-            <button onClick={() => setShowCatModal(true)} className="btn btn-primary btn-sm">
+        <section className="card admin-management-card" role="tabpanel">
+          <div className="admin-section-heading">
+            <div><h2>Categorii de probleme</h2><p>Grupează sesizările după domeniul lor</p></div>
+            <button onClick={() => setShowCatModal(true)} className="btn btn-primary btn-sm admin-primary-action">
               <Plus size={16} /> Categorie Nouă
             </button>
           </div>
 
-          <table className="custom-table">
+          <div className="admin-table-wrap"><table className="custom-table admin-table">
             <thead>
               <tr>
                 <th>Nume</th>
@@ -384,75 +416,76 @@ export function AdminDashboardPage() {
             <tbody>
               {categories.map((c) => (
                 <tr key={c.id}>
-                  <td style={{ fontWeight: 700 }}>{c.name}</td>
-                  <td style={{ color: "#2563eb" }}>{c.slug}</td>
-                  <td>{c.description || "Fără descriere"}</td>
+                  <td className="admin-primary-cell">{c.name}</td>
+                  <td className="admin-code-cell">{c.slug}</td>
+                  <td className="admin-muted-cell">{c.description || "Fără descriere"}</td>
                   <td>
-                    <span className="badge" style={{ backgroundColor: c.isActive ? "#dcfce7" : "#f1f5f9", color: c.isActive ? "#166534" : "#64748b" }}>
+                    <span className={`badge admin-status-badge ${c.isActive ? "is-active" : "is-inactive"}`}>
                       {c.isActive ? "Activă" : "Inactivă"}
                     </span>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </table></div>
+        </section>
       )}
 
       {/* TAB 4: INSTITUTIONS MANAGEMENT */}
       {activeTab === "institutions" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2 style={{ fontSize: "1.25rem" }}>Instituții & Departamente</h2>
-            <button onClick={() => setShowInstModal(true)} className="btn btn-primary btn-sm">
+        <section className="admin-institutions" role="tabpanel">
+          <div className="admin-section-heading admin-institutions-heading">
+            <div><h2>Instituții & Departamente</h2><p>Instituțiile responsabile și echipele lor</p></div>
+            <button onClick={() => setShowInstModal(true)} className="btn btn-primary btn-sm admin-primary-action">
               <Plus size={16} /> Instituție Nouă
             </button>
           </div>
 
           {institutions.map((inst) => (
-            <div key={inst.id} className="card" style={{ padding: "1.5rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem", borderBottom: "1px solid #f1f5f9", pb: "0.5rem" }}>
+            <article key={inst.id} className="card admin-institution-card">
+              <div className="admin-institution-heading">
                 <div>
-                  <h3 style={{ fontSize: "1.2rem", color: "#0f172a" }}>{inst.name}</h3>
-                  <div style={{ fontSize: "0.85rem", color: "#64748b" }}>Email: {inst.contactEmail || "Nespecificat"} • Termen Răspuns: {inst.responseDeadlineDays} zile</div>
+                  <h3>{inst.name}</h3>
+                  <div className="admin-institution-meta">Email: {inst.contactEmail || "Nespecificat"} <span>•</span> Termen răspuns: {inst.responseDeadlineDays} zile</div>
                 </div>
-                <div style={{ display: "flex", gap: "0.5rem" }}>
-                  <button onClick={() => { setTargetInstId(inst.id); setShowDeptModal(true); }} className="btn btn-secondary btn-sm">
+                <div className="admin-institution-actions">
+                  <button onClick={() => { setTargetInstId(inst.id); setShowDeptModal(true); }} className="btn btn-secondary btn-sm admin-secondary-action">
                     + Adaugă Departament
                   </button>
-                  <button onClick={() => { setTargetInstId(inst.id); setShowMemberModal(true); }} className="btn btn-secondary btn-sm">
+                  <button onClick={() => { setTargetInstId(inst.id); setShowMemberModal(true); }} className="btn btn-secondary btn-sm admin-secondary-action">
                     + Adaugă Membru Staff
                   </button>
                 </div>
               </div>
 
               {/* Departments */}
-              <div style={{ marginBottom: "1rem" }}>
-                <h4 style={{ fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Departamente:</h4>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+              <div className="admin-departments">
+                <h4>Departamente</h4>
+                <div className="admin-department-list">
                   {inst.departments?.map((d) => (
-                    <span key={d.id} className="badge" style={{ backgroundColor: "#eff6ff", color: "#1e40af", padding: "6px 12px" }}>
+                    <span key={d.id} className="badge admin-department-badge">
                       {d.name}
                     </span>
                   ))}
+                  {!inst.departments?.length && <span className="admin-empty-note">Nu sunt încă departamente adăugate.</span>}
                 </div>
               </div>
-            </div>
+            </article>
           ))}
-        </div>
+        </section>
       )}
 
       {/* TAB 5: ROUTING RULES */}
       {activeTab === "routing" && (
-        <div className="card" style={{ padding: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h2 style={{ fontSize: "1.25rem" }}>Harta Responsabilității (Reguli de Rutare Automată)</h2>
-            <button onClick={() => setShowRuleModal(true)} className="btn btn-primary btn-sm">
+        <section className="card admin-management-card" role="tabpanel">
+          <div className="admin-section-heading">
+            <div><h2>Harta responsabilității</h2><p>Reguli automate de repartizare a sesizărilor</p></div>
+            <button onClick={() => setShowRuleModal(true)} className="btn btn-primary btn-sm admin-primary-action">
               <Plus size={16} /> Regulă Nouă
             </button>
           </div>
 
-          <table className="custom-table">
+          <div className="admin-table-wrap"><table className="custom-table admin-table">
             <thead>
               <tr>
                 <th>Categorie</th>
@@ -464,23 +497,23 @@ export function AdminDashboardPage() {
             <tbody>
               {routingRules.map((rule) => (
                 <tr key={rule.id}>
-                  <td style={{ fontWeight: 700 }}>{rule.category?.name}</td>
-                  <td style={{ color: "#2563eb", fontWeight: 600 }}>{rule.department?.name} ({rule.department?.institution?.name})</td>
-                  <td>{rule.precedence}</td>
+                  <td className="admin-primary-cell">{rule.category?.name}</td>
+                  <td className="admin-code-cell">{rule.department?.name} <span className="admin-muted-cell">({rule.department?.institution?.name})</span></td>
+                  <td><span className="admin-precedence">{rule.precedence}</span></td>
                   <td>
-                    <button onClick={() => handleDeleteRule(rule.id)} className="btn btn-danger btn-sm">
+                    <button onClick={() => handleDeleteRule(rule.id)} className="btn btn-danger btn-sm admin-row-action is-danger">
                       <Trash2 size={14} /> Șterge
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </table></div>
+        </section>
       )}
 
       {/* Modals for Admin Actions */}
-      <Modal isOpen={showCatModal} onClose={() => setShowCatModal(false)} title="Categorie Nouă">
+      <Modal isOpen={showCatModal} onClose={() => setShowCatModal(false)} title="Categorie Nouă" className="admin-modal">
         <form onSubmit={handleCreateCategory}>
           <div className="form-group">
             <label className="form-label">Nume Categorie *</label>
@@ -498,7 +531,7 @@ export function AdminDashboardPage() {
         </form>
       </Modal>
 
-      <Modal isOpen={showInstModal} onClose={() => setShowInstModal(false)} title="Instituție Nouă">
+      <Modal isOpen={showInstModal} onClose={() => setShowInstModal(false)} title="Instituție Nouă" className="admin-modal">
         <form onSubmit={handleCreateInstitution}>
           <div className="form-group">
             <label className="form-label">Nume Instituție *</label>
@@ -516,7 +549,7 @@ export function AdminDashboardPage() {
         </form>
       </Modal>
 
-      <Modal isOpen={showDeptModal} onClose={() => setShowDeptModal(false)} title="Adaugă Departament">
+      <Modal isOpen={showDeptModal} onClose={() => setShowDeptModal(false)} title="Adaugă Departament" className="admin-modal">
         <form onSubmit={handleAddDepartment}>
           <div className="form-group">
             <label className="form-label">Nume Departament *</label>
@@ -526,7 +559,7 @@ export function AdminDashboardPage() {
         </form>
       </Modal>
 
-      <Modal isOpen={showMemberModal} onClose={() => setShowMemberModal(false)} title="Adaugă Membru Staff">
+      <Modal isOpen={showMemberModal} onClose={() => setShowMemberModal(false)} title="Adaugă Membru Staff" className="admin-modal">
         <form onSubmit={handleAddMember}>
           <div className="form-group">
             <label className="form-label">Email Utilizator *</label>
@@ -535,15 +568,15 @@ export function AdminDashboardPage() {
           <div className="form-group">
             <label className="form-label">Rol în Instituție</label>
             <select className="form-select" value={memberRole} onChange={(e) => setMemberRole(e.target.value)}>
-              <option value="HANDLER">HANDLER (Operator)</option>
-              <option value="MANAGER">MANAGER (Director)</option>
+              <option value="HANDLER">Staff operator</option>
+              <option value="MANAGER">Staff manager</option>
             </select>
           </div>
           <button type="submit" className="btn btn-primary btn-sm" style={{ width: "100%" }}>Adaugă Membru</button>
         </form>
       </Modal>
 
-      <Modal isOpen={showRuleModal} onClose={() => setShowRuleModal(false)} title="Adaugă Regulă de Rutare Automată">
+      <Modal isOpen={showRuleModal} onClose={() => setShowRuleModal(false)} title="Adaugă Regulă de Rutare Automată" className="admin-modal">
         <form onSubmit={handleCreateRule}>
           <div className="form-group">
             <label className="form-label">Categorie *</label>
@@ -568,6 +601,6 @@ export function AdminDashboardPage() {
           <button type="submit" className="btn btn-primary btn-sm" style={{ width: "100%" }}>Salvează Regula</button>
         </form>
       </Modal>
-    </div>
+    </main>
   );
 }

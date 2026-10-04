@@ -20,7 +20,7 @@ export function GoogleSuccessPage() {
       const user = await refreshUser();
       if (user) {
         addToast("Autentificare reușită cu Google!", "success");
-        navigate("/dashboard", { replace: true });
+        navigate("/", { replace: true });
       } else {
         navigate("/login?error=server_error", { replace: true });
       }

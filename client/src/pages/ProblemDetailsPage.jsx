@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { problemsApi } from "../api/problems.js";
-import { complaintsApi } from "../api/complaints.js";
 import { categoriesApi } from "../api/categories.js";
 import { assetUrl } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -59,10 +58,6 @@ export function ProblemDetailsPage() {
   const [categories, setCategories] = useState([]);
   const [editForm, setEditForm] = useState({ title: "", description: "", address: "", categoryId: "" });
   const [savingEdit, setSavingEdit] = useState(false);
-
-  // Formal Complaint Modal
-  const [showComplaintModal, setShowComplaintModal] = useState(false);
-  const [complaintChannel, setComplaintChannel] = useState("EMAIL");
 
   const loadProblemDetails = async () => {
     try {
@@ -177,18 +172,6 @@ export function ProblemDetailsPage() {
     }
   };
 
-  // Formal Complaint Handler
-  const handleCreateComplaint = async () => {
-    try {
-      await complaintsApi.createComplaint(id, { channel: complaintChannel });
-      setShowComplaintModal(false);
-      addToast("Sesizarea formală oficială a fost expediată!", "success");
-      loadProblemDetails();
-    } catch (err) {
-      addToast(err.message || "Eroare la expedierea sesizării formale.", "error");
-    }
-  };
-
   // Edit Problem Handlers
   const openEditModal = async () => {
     setEditForm({
@@ -247,7 +230,7 @@ export function ProblemDetailsPage() {
     try {
       await problemsApi.deleteProblem(id);
       addToast("Sesizarea a fost ștearsă.", "info");
-      navigate("/dashboard");
+      navigate("/");
     } catch (err) {
       addToast(err.message || "Eroare la ștergerea sesizării.", "error");
     }
@@ -283,7 +266,7 @@ export function ProblemDetailsPage() {
       <div style={{ marginBottom: "1.5rem" }}>
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginBottom: "0.5rem" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <span style={{ fontSize: "1.25rem", fontWeight: 800, color: "#2563eb" }}>
+            <span style={{ fontSize: "1.47rem", fontWeight: 800, color: "#2563eb" }}>
               {problem.code}
             </span>
             <StatusBadge status={problem.status} />
@@ -311,11 +294,11 @@ export function ProblemDetailsPage() {
           </div>
         </div>
 
-        <h1 style={{ fontSize: "2rem", color: "#0f172a", marginBottom: "0.5rem" }}>
+        <h1 style={{ fontSize: "2.36rem", color: "#0f172a", marginBottom: "0.5rem" }}>
           {problem.title}
         </h1>
 
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem", fontSize: "0.875rem", color: "#64748b" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1.25rem", fontSize: "1.03rem", color: "#64748b" }}>
           <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             <MapPin size={16} /> {problem.address || "Nesemnată"}
           </span>
@@ -339,11 +322,11 @@ export function ProblemDetailsPage() {
             border: "2px solid #f97316",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#c2410c", fontWeight: 700, fontSize: "1.15rem", marginBottom: "0.5rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#c2410c", fontWeight: 700, fontSize: "1.36rem", marginBottom: "0.5rem" }}>
             <AlertOctagon size={26} />
             Problema a fost declarată rezolvată de către autorități!
           </div>
-          <p style={{ color: "#9a3412", fontSize: "0.95rem", marginBottom: "1rem" }}>
+          <p style={{ color: "#9a3412", fontSize: "1.12rem", marginBottom: "1rem" }}>
             Bifează mai jos dacă problema pe teren este într-adevăr remediată conform așteptărilor.
           </p>
           <div style={{ display: "flex", gap: "1rem" }}>
@@ -375,7 +358,7 @@ export function ProblemDetailsPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
           {/* Description Card */}
           <div className="card" style={{ padding: "1.5rem" }}>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>Descriere</h3>
+            <h3 style={{ fontSize: "1.3rem", marginBottom: "0.75rem" }}>Descriere</h3>
             <p style={{ color: "#334155", lineHeight: "1.6", whiteSpace: "pre-line" }}>
               {problem.description || "Fără descriere adăugată."}
             </p>
@@ -383,7 +366,7 @@ export function ProblemDetailsPage() {
             {/* Photos Gallery */}
             {problem.photos && problem.photos.length > 0 && (
               <div style={{ marginTop: "1.5rem" }}>
-                <h4 style={{ fontSize: "0.95rem", marginBottom: "0.75rem", color: "#64748b" }}>Fotografii atașate</h4>
+                <h4 style={{ fontSize: "1.12rem", marginBottom: "0.75rem", color: "#64748b" }}>Fotografii atașate</h4>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "0.75rem" }}>
                   {problem.photos.map((ph) => (
                     <a key={ph.id} href={assetUrl(ph.publicPath)} target="_blank" rel="noopener noreferrer">
@@ -407,7 +390,7 @@ export function ProblemDetailsPage() {
 
           {/* Interactive Map */}
           <div className="card" style={{ padding: "1rem" }}>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: "0.75rem" }}>Locație GPS</h3>
+            <h3 style={{ fontSize: "1.3rem", marginBottom: "0.75rem" }}>Locație GPS</h3>
             <LeafletMap problems={[problem]} center={[problem.latitude, problem.longitude]} zoom={15} height="320px" />
           </div>
 
@@ -424,10 +407,10 @@ export function ProblemDetailsPage() {
             }}
           >
             <div>
-              <div style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0f172a" }}>
+              <div style={{ fontSize: "1.47rem", fontWeight: 800, color: "#0f172a" }}>
                 👍 +{problem.supportCount || 0} susțineri cetățenești
               </div>
-              <div style={{ fontSize: "0.85rem", color: "#64748b" }}>
+              <div style={{ fontSize: "1rem", color: "#64748b" }}>
                 Susținerea adăugată crește automat scorul de prioritate al tichetului.
               </div>
             </div>
@@ -440,24 +423,9 @@ export function ProblemDetailsPage() {
             </button>
           </div>
 
-          {/* Formal Complaint Button */}
-          <div className="card" style={{ padding: "1.25rem", background: "#f8fafc" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>Ai nevoie de o sesizare formală oficială?</div>
-                <div style={{ fontSize: "0.8rem", color: "#64748b" }}>
-                  Expediază o reclamație cu termen legal de răspuns către instituție.
-                </div>
-              </div>
-              <button onClick={() => setShowComplaintModal(true)} className="btn btn-outline btn-sm">
-                Depune Sesizare Formală
-              </button>
-            </div>
-          </div>
-
           {/* Comments Section */}
           <div className="card" style={{ padding: "1.5rem" }}>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h3 style={{ fontSize: "1.3rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <MessageSquare size={20} /> Comentarii ({comments.length})
             </h3>
 
@@ -476,7 +444,7 @@ export function ProblemDetailsPage() {
                   {isStaff ? (
                     <select
                       className="form-select"
-                      style={{ width: "auto", fontSize: "0.8rem" }}
+                      style={{ width: "auto", fontSize: "0.94rem" }}
                       value={commentVisibility}
                       onChange={(e) => setCommentVisibility(e.target.value)}
                     >
@@ -484,7 +452,7 @@ export function ProblemDetailsPage() {
                       <option value="INTERNAL">Comentariu Intern Staff (privat)</option>
                     </select>
                   ) : (
-                    <span style={{ fontSize: "0.75rem", color: "#64748b" }}>Vizibil public</span>
+                    <span style={{ fontSize: "0.89rem", color: "#64748b" }}>Vizibil public</span>
                   )}
 
                   <button type="submit" className="btn btn-primary btn-sm" disabled={submittingComment}>
@@ -512,14 +480,14 @@ export function ProblemDetailsPage() {
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.375rem" }}>
-                    <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "#0f172a" }}>
-                      {c.author?.name || "Utilizator"} {c.visibility === "INTERNAL" && <span style={{ color: "#b45309", fontSize: "0.75rem" }}>(Intern Staff)</span>}
+                    <span style={{ fontWeight: 700, fontSize: "1rem", color: "#0f172a" }}>
+                      {c.author?.name || "Utilizator"} {c.visibility === "INTERNAL" && <span style={{ color: "#b45309", fontSize: "0.89rem" }}>(Intern Staff)</span>}
                     </span>
-                    <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
+                    <span style={{ fontSize: "0.89rem", color: "#64748b" }}>
                       {new Date(c.createdAt).toLocaleString("ro-RO")}
                     </span>
                   </div>
-                  <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, lineHeight: 1.4 }}>
+                  <p style={{ fontSize: "1.06rem", color: "#334155", margin: 0, lineHeight: 1.4 }}>
                     {c.body}
                   </p>
                 </div>
@@ -532,27 +500,27 @@ export function ProblemDetailsPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           {/* Department & Institution Info */}
           <div className="card" style={{ padding: "1.5rem" }}>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h3 style={{ fontSize: "1.3rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <Building size={20} style={{ color: "#2563eb" }} /> Responsabilitate Institutională
             </h3>
 
             <div style={{ marginBottom: "1rem" }}>
-              <div style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Departament Repartizat:</div>
-              <div style={{ fontSize: "1rem", fontWeight: 700, color: "#0f172a" }}>
+              <div style={{ fontSize: "0.89rem", color: "#64748b", fontWeight: 600 }}>Departament Repartizat:</div>
+              <div style={{ fontSize: "1.18rem", fontWeight: 700, color: "#0f172a" }}>
                 {problem.department?.name || "În curs de repartizare automată"}
               </div>
             </div>
 
             <div style={{ marginBottom: "1rem" }}>
-              <div style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Instituție Competentă:</div>
-              <div style={{ fontSize: "0.95rem", fontWeight: 600, color: "#334155" }}>
+              <div style={{ fontSize: "0.89rem", color: "#64748b", fontWeight: 600 }}>Instituție Competentă:</div>
+              <div style={{ fontSize: "1.12rem", fontWeight: 600, color: "#334155" }}>
                 {problem.department?.institution?.name || "Primăria Municipiului"}
               </div>
             </div>
 
             <div>
-              <div style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: 600 }}>Responsabil Alocat:</div>
-              <div style={{ fontSize: "0.875rem", color: "#334155" }}>
+              <div style={{ fontSize: "0.89rem", color: "#64748b", fontWeight: 600 }}>Responsabil Alocat:</div>
+              <div style={{ fontSize: "1.03rem", color: "#334155" }}>
                 {problem.assignee?.name || "Nealocat"}
               </div>
             </div>
@@ -560,20 +528,20 @@ export function ProblemDetailsPage() {
 
           {/* Timeline / Status History */}
           <div className="card" style={{ padding: "1.5rem" }}>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <h3 style={{ fontSize: "1.3rem", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <History size={20} style={{ color: "#2563eb" }} /> Istoric & Timeline
             </h3>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem", position: "relative" }}>
               {history.map((h, i) => (
-                <div key={h.id || i} style={{ display: "flex", gap: "0.75rem", fontSize: "0.85rem" }}>
+                <div key={h.id || i} style={{ display: "flex", gap: "0.75rem", fontSize: "1rem" }}>
                   <div style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: "#2563eb", marginTop: "4px", flexShrink: 0 }} />
                   <div>
                     <div style={{ fontWeight: 700, color: "#0f172a" }}>
                       Tranziție: <StatusBadge status={h.toStatus} />
                     </div>
                     {h.comment && <div style={{ color: "#475569", marginTop: "2px" }}>{h.comment}</div>}
-                    <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "2px" }}>
+                    <div style={{ fontSize: "0.89rem", color: "#94a3b8", marginTop: "2px" }}>
                       {new Date(h.createdAt).toLocaleString("ro-RO")} • {h.author?.name || "Sistem"}
                     </div>
                   </div>
@@ -704,7 +672,7 @@ export function ProblemDetailsPage() {
                 </option>
               ))}
             </select>
-            <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.25rem" }}>
+            <div style={{ fontSize: "0.89rem", color: "#64748b", marginTop: "0.25rem" }}>
               Schimbarea categoriei poate redirecționa sesizarea către alt departament.
             </div>
           </div>
@@ -720,30 +688,6 @@ export function ProblemDetailsPage() {
         </form>
       </Modal>
 
-      {/* Formal Complaint Modal */}
-      <Modal isOpen={showComplaintModal} onClose={() => setShowComplaintModal(false)} title="Depunere Sesizare Formală">
-        <p style={{ fontSize: "0.9rem", color: "#64748b", marginBottom: "1rem" }}>
-          O sesizare formală înregistrează un tichet oficial cu termen legal obligatoriu de răspuns.
-        </p>
-
-        <div className="form-group">
-          <label className="form-label">Canal de Transmitere</label>
-          <select className="form-select" value={complaintChannel} onChange={(e) => setComplaintChannel(e.target.value)}>
-            <option value="EMAIL">Email Oficial (EMAIL)</option>
-            <option value="PDF">Document PDF (PDF)</option>
-            <option value="PORTAL">Portal Instituțional (PORTAL)</option>
-          </select>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1rem" }}>
-          <button onClick={() => setShowComplaintModal(false)} className="btn btn-secondary btn-sm">
-            Anulează
-          </button>
-          <button onClick={handleCreateComplaint} className="btn btn-primary btn-sm">
-            Expediază Sesizarea Formală
-          </button>
-        </div>
-      </Modal>
     </div>
   );
 }

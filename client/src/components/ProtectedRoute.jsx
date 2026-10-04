@@ -25,8 +25,25 @@ export function ProtectedRoute({ children, allowedRoles }) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />;
+  if (
+    allowedRoles
+    && !allowedRoles.some((role) => String(user.role).toUpperCase() === role.toUpperCase())
+  ) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
+export function PublicRoute({ children }) {
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="auth-loading" aria-live="polite">
+        Se verifică sesiunea...
+      </div>
+    );
   }
 
   return children;

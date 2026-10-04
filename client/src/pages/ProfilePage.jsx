@@ -70,16 +70,16 @@ export function ProfilePage() {
   return (
     <div className="container-custom" style={{ padding: "2.5rem 1.5rem" }}>
       <div style={{ maxWidth: "680px", margin: "0 auto" }}>
-        <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+        <h1 style={{ fontSize: "2.36rem", marginBottom: "0.5rem" }}>
           Setări Profil
         </h1>
-        <p style={{ color: "var(--text-muted)", fontSize: "0.95rem", marginBottom: "2rem" }}>
+        <p style={{ color: "var(--text-muted)", fontSize: "1.12rem", marginBottom: "2rem" }}>
           Administrează informațiile personale și securitatea contului tău.
         </p>
 
         {/* Profile Card */}
         <form onSubmit={handleUpdateProfile} className="card" style={{ padding: "1.75rem", marginBottom: "2rem" }}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <h2 style={{ fontSize: "1.47rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <User size={20} style={{ color: "#2563eb" }} /> Date Personale
           </h2>
 
@@ -126,7 +126,7 @@ export function ProfilePage() {
 
         {/* Change Password Card */}
         <form onSubmit={handleChangePassword} className="card" style={{ padding: "1.75rem" }}>
-          <h2 style={{ fontSize: "1.25rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <h2 style={{ fontSize: "1.47rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <Lock size={20} style={{ color: "#2563eb" }} /> Schimbare Parolă
           </h2>
 

@@ -47,8 +47,8 @@ export function ForgotPasswordPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Resetare Parolă</h2>
-          <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+          <h2 style={{ fontSize: "1.77rem", marginBottom: "0.5rem" }}>Resetare Parolă</h2>
+          <p style={{ fontSize: "1.03rem", color: "#64748b" }}>
             Introdu emailul asociat contului tău pentru a primi linkul de resetare.
           </p>
         </div>
@@ -58,7 +58,7 @@ export function ForgotPasswordPage() {
             <div style={{ color: "#10b981", fontWeight: 700, marginBottom: "1rem" }}>
               Email expediat cu succes!
             </div>
-            <p style={{ fontSize: "0.875rem", color: "#64748b", marginBottom: "1.5rem" }}>
+            <p style={{ fontSize: "1.03rem", color: "#64748b", marginBottom: "1.5rem" }}>
               Verifică căsuța poștală a adresei <strong>{email}</strong> pentru instrucțiuni.
             </p>
             <Link to="/login" className="btn btn-secondary btn-sm">
@@ -98,7 +98,7 @@ export function ForgotPasswordPage() {
         )}
 
         <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-          <Link to="/login" style={{ fontSize: "0.85rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+          <Link to="/login" style={{ fontSize: "1rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "4px" }}>
             <ArrowLeft size={14} /> Înapoi la Autentificare
           </Link>
         </div>

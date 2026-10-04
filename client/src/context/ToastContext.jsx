@@ -48,7 +48,7 @@ export function ToastProvider({ children }) {
               alignItems: "center",
               justifyContent: "space-between",
               gap: "0.75rem",
-              fontSize: "0.9rem",
+              fontSize: "1.06rem",
               fontWeight: 500,
               color: "#ffffff",
               backgroundColor:

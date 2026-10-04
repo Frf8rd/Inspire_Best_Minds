@@ -30,7 +30,7 @@ export function Footer() {
                 alignItems: "center",
                 gap: "0.5rem",
                 color: "#ffffff",
-                fontSize: "1.25rem",
+                fontSize: "1.47rem",
                 fontWeight: 800,
                 marginBottom: "0.75rem",
               }}
@@ -38,15 +38,15 @@ export function Footer() {
               <MapPin size={22} style={{ color: "#2563eb" }} />
               Urban<span style={{ color: "#38bdf8" }}>Pulse</span>
             </div>
-            <p style={{ fontSize: "0.875rem", lineHeight: "1.6" }}>
+            <p style={{ fontSize: "1.03rem", lineHeight: "1.6" }}>
               Platformă digitală modernă pentru sesizări urbane, implicare cetățenească și transparență instituțională.
             </p>
           </div>
 
           {/* Navigation Col */}
           <div>
-            <h4 style={{ color: "#ffffff", fontSize: "0.95rem", marginBottom: "1rem" }}>Aplicație</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", fontSize: "0.875rem" }}>
+            <h4 style={{ color: "#ffffff", fontSize: "1.12rem", marginBottom: "1rem" }}>Aplicație</h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", fontSize: "1.03rem" }}>
               <Link to="/map" style={{ color: "#94a3b8" }}>Hartă Interactivă</Link>
               <Link to="/problems" style={{ color: "#94a3b8" }}>Toate Sesizările</Link>
               <Link to="/problems/create" style={{ color: "#94a3b8" }}>Raportează o Problemă</Link>
@@ -56,17 +56,17 @@ export function Footer() {
 
           {/* Transparency Col */}
           <div>
-            <h4 style={{ color: "#ffffff", fontSize: "0.95rem", marginBottom: "1rem" }}>Transparență</h4>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", fontSize: "0.875rem" }}>
+            <h4 style={{ color: "#ffffff", fontSize: "1.12rem", marginBottom: "1rem" }}>Transparență</h4>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", fontSize: "1.03rem" }}>
               <Link to="/analytics/transparency/primaria-chisinau" style={{ color: "#94a3b8" }}>Raport Transparență Primărie</Link>
-              <span style={{ fontSize: "0.8rem", color: "#64748b" }}>Auditat automat în timp real</span>
+              <span style={{ fontSize: "0.94rem", color: "#64748b" }}>Auditat automat în timp real</span>
             </div>
           </div>
 
           {/* Hackathon BEST Minds info */}
           <div>
-            <h4 style={{ color: "#ffffff", fontSize: "0.95rem", marginBottom: "1rem" }}>BEST Minds Hackathon</h4>
-            <p style={{ fontSize: "0.85rem", lineHeight: "1.5" }}>
+            <h4 style={{ color: "#ffffff", fontSize: "1.12rem", marginBottom: "1rem" }}>BEST Minds Hackathon</h4>
+            <p style={{ fontSize: "1rem", lineHeight: "1.5" }}>
               Construit cu pasiuni pentru o administrație publică eficientă, deschisă și axată pe cetățean.
             </p>
           </div>
@@ -81,7 +81,7 @@ export function Footer() {
             justifyContent: "space-between",
             alignItems: "center",
             gap: "1rem",
-            fontSize: "0.8rem",
+            fontSize: "0.94rem",
           }}
         >
           <div>© {new Date().getFullYear()} UrbanPulse (Inspire Best Minds). Toate drepturile rezervate.</div>

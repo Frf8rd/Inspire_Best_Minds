@@ -90,10 +90,10 @@ export function ProblemsListPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+          <h1 style={{ fontSize: "2.36rem", marginBottom: "0.5rem" }}>
             Sesizări Urbane Comunitare
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "1.12rem" }}>
             Explorează, susține (+1) și urmărește stadiul tuturor tichetelor raportate în oraș.
           </p>
         </div>
@@ -142,7 +142,7 @@ export function ProblemsListPage() {
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
           <select
             className="form-select"
-            style={{ width: "auto", fontSize: "0.85rem" }}
+            style={{ width: "auto", fontSize: "1rem" }}
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
           >
@@ -156,7 +156,7 @@ export function ProblemsListPage() {
 
           <select
             className="form-select"
-            style={{ width: "auto", fontSize: "0.85rem" }}
+            style={{ width: "auto", fontSize: "1rem" }}
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
           >
@@ -169,7 +169,7 @@ export function ProblemsListPage() {
 
           <select
             className="form-select"
-            style={{ width: "auto", fontSize: "0.85rem" }}
+            style={{ width: "auto", fontSize: "1rem" }}
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
           >
@@ -188,7 +188,7 @@ export function ProblemsListPage() {
       ) : problems.length === 0 ? (
         <div className="card" style={{ padding: "3rem", textAlign: "center" }}>
           <h3 style={{ marginBottom: "0.5rem" }}>Nu s-au găsit sesizări</h3>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.9rem" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "1.06rem" }}>
             Încearcă să modifici filtrele sau caută alt termen.
           </p>
         </div>
@@ -233,15 +233,15 @@ export function ProblemsListPage() {
 
               <div style={{ padding: "1.25rem", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                 <div>
-                  <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#2563eb", marginBottom: "4px" }}>
+                  <div style={{ fontSize: "0.89rem", fontWeight: 700, color: "#2563eb", marginBottom: "4px" }}>
                     {item.code}
                   </div>
-                  <h3 style={{ fontSize: "1.1rem", marginBottom: "0.5rem", lineHeight: 1.3 }}>
+                  <h3 style={{ fontSize: "1.3rem", marginBottom: "0.5rem", lineHeight: 1.3 }}>
                     <Link to={`/problems/${item.id}`} style={{ color: "#0f172a" }}>
                       {item.title}
                     </Link>
                   </h3>
-                  <p style={{ fontSize: "0.85rem", color: "#64748b", marginBottom: "1rem" }}>
+                  <p style={{ fontSize: "1rem", color: "#64748b", marginBottom: "1rem" }}>
                     <MapPin size={14} style={{ display: "inline", marginRight: "4px" }} />
                     {item.address || "Nesemnată"}
                   </p>
@@ -254,7 +254,7 @@ export function ProblemsListPage() {
                     justifyContent: "space-between",
                     paddingTop: "0.75rem",
                     borderTop: "1px solid #f1f5f9",
-                    fontSize: "0.8rem",
+                    fontSize: "0.94rem",
                   }}
                 >
                   <span style={{ display: "flex", alignItems: "center", gap: "4px", fontWeight: 600, color: "#10b981" }}>

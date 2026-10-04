@@ -187,16 +187,16 @@ export function LeafletMap({
           ${photoUrl ? `<img src="${escapeHtml(photoUrl)}" style="width:100%; height:120px; object-fit:cover; border-radius:6px 6px 0 0;" />` : ""}
           <div style="padding: 10px;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-              <span style="font-weight:700; font-size:0.75rem; color:#2563eb;">${escapeHtml(code)}</span>
-              <span style="font-size:0.7rem; font-weight:600; padding:2px 6px; border-radius:10px; background:#f1f5f9; color:#475569;">
+              <span style="font-weight:700; font-size:0.89rem; color:#2563eb;">${escapeHtml(code)}</span>
+              <span style="font-size:0.83rem; font-weight:600; padding:2px 6px; border-radius:10px; background:#f1f5f9; color:#475569;">
                 ${escapeHtml(STATUS_LABELS[problem.status] || problem.status)}
               </span>
             </div>
-            <h4 style="margin:0 0 6px 0; font-size:0.95rem; font-weight:700; color:#0f172a; line-height:1.2;">${escapeHtml(problem.title)}</h4>
-            <p style="margin:0 0 8px 0; font-size:0.75rem; color:#64748b;">${escapeHtml(problem.address || "Nesemnată")}</p>
+            <h4 style="margin:0 0 6px 0; font-size:1.12rem; font-weight:700; color:#0f172a; line-height:1.2;">${escapeHtml(problem.title)}</h4>
+            <p style="margin:0 0 8px 0; font-size:0.89rem; color:#64748b;">${escapeHtml(problem.address || "Nesemnată")}</p>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-              <span style="font-size:0.75rem; font-weight:600; color:#10b981;">👍 +${problem.supportCount || 0} susțineri</span>
-              <a href="/problems/${escapeHtml(problem.id)}" style="font-size:0.8rem; font-weight:600; color:#2563eb; text-decoration:none;">Detalii &rarr;</a>
+              <span style="font-size:0.89rem; font-weight:600; color:#10b981;">👍 +${problem.supportCount || 0} susțineri</span>
+              <a href="/problems/${escapeHtml(problem.id)}" style="font-size:0.94rem; font-weight:600; color:#2563eb; text-decoration:none;">Detalii &rarr;</a>
             </div>
           </div>
         </div>
@@ -230,7 +230,7 @@ export function LeafletMap({
             padding: "8px 14px",
             borderRadius: "8px",
             boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-            fontSize: "0.85rem",
+            fontSize: "1rem",
             fontWeight: 600,
             color: "#0f172a",
           }}

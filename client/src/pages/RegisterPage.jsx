@@ -65,10 +65,10 @@ export function RegisterPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <h2 style={{ fontSize: "1.75rem", color: "#0f172a", marginBottom: "0.5rem" }}>
+          <h2 style={{ fontSize: "2.06rem", color: "#0f172a", marginBottom: "0.5rem" }}>
             Creează un cont <span style={{ color: "#2563eb" }}>UrbanPulse</span>
           </h2>
-          <p style={{ fontSize: "0.9rem", color: "#64748b" }}>
+          <p style={{ fontSize: "1.06rem", color: "#64748b" }}>
             Implică-te activ în dezvoltarea orașului tău
           </p>
         </div>
@@ -199,7 +199,7 @@ export function RegisterPage() {
           </button>
         </form>
 
-        <div style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.875rem", color: "#64748b" }}>
+        <div style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "1.03rem", color: "#64748b" }}>
           Ai deja un cont?{" "}
           <Link to="/login" style={{ fontWeight: 700 }}>
             Autentifică-te

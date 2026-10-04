@@ -39,7 +39,7 @@ export function ResetPasswordPage() {
       await authApi.resetPassword({ token, password: newPassword });
       await refreshUser();
       addToast("Parola a fost resetată cu succes! Ești autentificat.", "success");
-      navigate("/dashboard", { replace: true });
+      navigate("/", { replace: true });
     } catch (err) {
       addToast(err.message || "Token invalid sau expirat.", "error");
     } finally {
@@ -66,8 +66,8 @@ export function ResetPasswordPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>Setare Parolă Nouă</h2>
-          <p style={{ fontSize: "0.875rem", color: "#64748b" }}>
+          <h2 style={{ fontSize: "1.77rem", marginBottom: "0.5rem" }}>Setare Parolă Nouă</h2>
+          <p style={{ fontSize: "1.03rem", color: "#64748b" }}>
             Introdu nouă parolă pentru contul tău.
           </p>
         </div>
@@ -127,7 +127,7 @@ export function ResetPasswordPage() {
         </form>
 
         <div style={{ marginTop: "1.5rem", textAlign: "center" }}>
-          <Link to="/login" style={{ fontSize: "0.85rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+          <Link to="/login" style={{ fontSize: "1rem", color: "#64748b", display: "inline-flex", alignItems: "center", gap: "4px" }}>
             <ArrowLeft size={14} /> Înapoi la Autentificare
           </Link>
         </div>

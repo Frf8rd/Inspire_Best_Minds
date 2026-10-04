@@ -157,10 +157,10 @@ export function CreateProblemPage() {
     <div className="container-custom" style={{ padding: "2.5rem 1.5rem" }}>
       <div style={{ maxWidth: "840px", margin: "0 auto" }}>
         <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+          <h1 style={{ fontSize: "2.36rem", marginBottom: "0.5rem" }}>
             Raportează o Problemă Urbană
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "1.12rem" }}>
             Completează datele problemei pentru ca echipa să poată interveni în cel mai scurt timp.
           </p>
         </div>
@@ -176,11 +176,11 @@ export function CreateProblemPage() {
               borderColor: "#93c5fd",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#1d4ed8", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.5rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", color: "#1d4ed8", fontWeight: 700, fontSize: "1.3rem", marginBottom: "0.5rem" }}>
               <AlertTriangle size={24} />
               Această problemă a fost deja raportată!
             </div>
-            <p style={{ color: "#1e40af", fontSize: "0.9rem", marginBottom: "1rem" }}>
+            <p style={{ color: "#1e40af", fontSize: "1.06rem", marginBottom: "1rem" }}>
               Am detectat o sesizare similară în apropiere ({duplicateInfo.parentCode}). Am adăugat automat susținerea ta (+1) la problema existentă pentru a-i crește prioritatea.
             </p>
             <button
@@ -201,7 +201,7 @@ export function CreateProblemPage() {
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", color: "#b91c1c", fontWeight: 700, marginBottom: "0.25rem" }}>
               <AlertTriangle size={20} /> {submitError.title}
             </div>
-            <p style={{ color: "#991b1b", fontSize: "0.9rem", margin: 0 }}>{submitError.message}</p>
+            <p style={{ color: "#991b1b", fontSize: "1.06rem", margin: 0 }}>{submitError.message}</p>
           </div>
         )}
 
@@ -282,7 +282,7 @@ export function CreateProblemPage() {
               <div style={{ fontWeight: 600, color: "#334155" }}>
                 Apasă sau trage fișierele foto aici
               </div>
-              <div style={{ fontSize: "0.75rem", color: "#64748b" }}>
+              <div style={{ fontSize: "0.89rem", color: "#64748b" }}>
                 Formate suportate: JPEG, PNG, WebP
               </div>
             </div>
@@ -338,7 +338,7 @@ export function CreateProblemPage() {
                 type="button"
                 onClick={handleUseMyLocation}
                 className="btn btn-secondary btn-sm"
-                style={{ fontSize: "0.75rem" }}
+                style={{ fontSize: "0.89rem" }}
               >
                 <Navigation size={14} /> Folosește locația mea GPS
               </button>

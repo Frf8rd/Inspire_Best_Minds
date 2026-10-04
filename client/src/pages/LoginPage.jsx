@@ -101,10 +101,10 @@ export function LoginPage() {
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
-          <h2 style={{ fontSize: "1.75rem", color: "#0f172a", marginBottom: "0.5rem" }}>
+          <h2 style={{ fontSize: "2.06rem", color: "#0f172a", marginBottom: "0.5rem" }}>
             Autentificare <span style={{ color: "#2563eb" }}>UrbanPulse</span>
           </h2>
-          <p style={{ fontSize: "0.9rem", color: "#64748b" }}>
+          <p style={{ fontSize: "1.06rem", color: "#64748b" }}>
             Introdu datele de acces pentru a continua
           </p>
         </div>
@@ -119,7 +119,7 @@ export function LoginPage() {
               background: "#fef2f2",
               border: "1px solid #fecaca",
               color: "#b91c1c",
-              fontSize: "0.875rem",
+              fontSize: "1.03rem",
             }}
           >
             {urlErrorMessage}
@@ -154,7 +154,7 @@ export function LoginPage() {
           <div className="form-group">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <label className="form-label">Parolă</label>
-              <Link to="/forgot-password" style={{ fontSize: "0.8rem", fontWeight: 600 }}>
+              <Link to="/forgot-password" style={{ fontSize: "0.94rem", fontWeight: 600 }}>
                 Ai uitat parola?
               </Link>
             </div>
@@ -185,7 +185,7 @@ export function LoginPage() {
           </button>
         </form>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", margin: "1.5rem 0 1rem", color: "#94a3b8", fontSize: "0.8rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", margin: "1.5rem 0 1rem", color: "#94a3b8", fontSize: "0.94rem" }}>
           <div style={{ flex: 1, height: "1px", background: "#e2e8f0" }} />
           sau
           <div style={{ flex: 1, height: "1px", background: "#e2e8f0" }} />
@@ -203,35 +203,35 @@ export function LoginPage() {
 
         {/* Demo Accounts Quick Login */}
         <div style={{ marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid #f1f5f9" }}>
-          <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "0.75rem", textAlign: "center" }}>
+          <div style={{ fontSize: "0.94rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", marginBottom: "0.75rem", textAlign: "center" }}>
             Acces rapid demo (Hackathon)
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
             <button
               onClick={() => fillDemo("citizen@urbanpulse.md", "Test1234")}
               className="btn btn-secondary btn-sm"
-              style={{ fontSize: "0.75rem", padding: "6px" }}
+              style={{ fontSize: "0.89rem", padding: "6px" }}
             >
               <User size={14} /> Cetățean
             </button>
             <button
               onClick={() => fillDemo("staff@urbanpulse.md", "Test1234")}
               className="btn btn-secondary btn-sm"
-              style={{ fontSize: "0.75rem", padding: "6px" }}
+              style={{ fontSize: "0.89rem", padding: "6px" }}
             >
               <Briefcase size={14} /> Staff
             </button>
             <button
               onClick={() => fillDemo("admin@urbanpulse.md", "Test1234")}
               className="btn btn-secondary btn-sm"
-              style={{ fontSize: "0.75rem", padding: "6px" }}
+              style={{ fontSize: "0.89rem", padding: "6px" }}
             >
               <Shield size={14} /> Admin
             </button>
           </div>
         </div>
 
-        <div style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "0.875rem", color: "#64748b" }}>
+        <div style={{ marginTop: "1.5rem", textAlign: "center", fontSize: "1.03rem", color: "#64748b" }}>
           Nu ai un cont încă?{" "}
           <Link to="/register" style={{ fontWeight: 700 }}>
             Înregistrează-te gratuit

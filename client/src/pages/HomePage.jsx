@@ -81,7 +81,7 @@ export function HomePage() {
                 background: "rgba(37, 99, 235, 0.2)",
                 border: "1px solid rgba(59, 130, 246, 0.4)",
                 color: "#60a5fa",
-                fontSize: "0.85rem",
+                fontSize: "1rem",
                 fontWeight: 600,
                 marginBottom: "1.25rem",
               }}
@@ -91,7 +91,7 @@ export function HomePage() {
 
             <h1
               style={{
-                fontSize: "clamp(2.2rem, 5vw, 3.4rem)",
+                fontSize: "clamp(2.6rem, 5.9vw, 4.01rem)",
                 fontWeight: 800,
                 lineHeight: 1.15,
                 marginBottom: "1.25rem",
@@ -102,7 +102,7 @@ export function HomePage() {
               <span style={{ color: "#38bdf8" }}>Raportează & Transforma Comunitatea.</span>
             </h1>
 
-            <p style={{ fontSize: "1.125rem", color: "#94a3b8", lineHeight: 1.6, marginBottom: "2rem" }}>
+            <p style={{ fontSize: "1.33rem", color: "#94a3b8", lineHeight: 1.6, marginBottom: "2rem" }}>
               UrbanPulse conectează cetățenii cu instituțiile responsabile în timp real. Raportează gropi, avarii, iluminat deficitar sau deșeuri și urmărește rezolvarea tichetului tău pas cu pas.
             </p>
 
@@ -137,10 +137,10 @@ export function HomePage() {
                 <TrendingUp size={24} />
               </div>
               <div>
-                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#0f172a" }}>
+                <div style={{ fontSize: "1.89rem", fontWeight: 800, color: "#0f172a" }}>
                   {stats?.statusCounts ? Object.values(stats.statusCounts).reduce((a, b) => a + b, 0) : 0}
                 </div>
-                <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 500 }}>Total Sesizări Registrate</div>
+                <div style={{ fontSize: "1rem", color: "#64748b", fontWeight: 500 }}>Total Sesizări Registrate</div>
               </div>
             </div>
 
@@ -149,10 +149,10 @@ export function HomePage() {
                 <CheckCircle2 size={24} />
               </div>
               <div>
-                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#0f172a" }}>
+                <div style={{ fontSize: "1.89rem", fontWeight: 800, color: "#0f172a" }}>
                   {(stats?.statusCounts?.RESOLVED || 0) + (stats?.statusCounts?.RESOLVED_PENDING_CONFIRMATION || 0)}
                 </div>
-                <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 500 }}>Probleme Rezolvate</div>
+                <div style={{ fontSize: "1rem", color: "#64748b", fontWeight: 500 }}>Probleme Rezolvate</div>
               </div>
             </div>
 
@@ -161,10 +161,10 @@ export function HomePage() {
                 <Clock size={24} />
               </div>
               <div>
-                <div style={{ fontSize: "1.6rem", fontWeight: 800, color: "#0f172a" }}>
+                <div style={{ fontSize: "1.89rem", fontWeight: 800, color: "#0f172a" }}>
                   {stats?.avgResponseTimeHours !== undefined ? `${stats.avgResponseTimeHours}h` : "< 24h"}
                 </div>
-                <div style={{ fontSize: "0.85rem", color: "#64748b", fontWeight: 500 }}>Timp Mediu de Răspuns</div>
+                <div style={{ fontSize: "1rem", color: "#64748b", fontWeight: 500 }}>Timp Mediu de Răspuns</div>
               </div>
             </div>
           </div>
@@ -176,8 +176,8 @@ export function HomePage() {
         <div className="container-custom">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "1.5rem" }}>
             <div>
-              <h2 style={{ fontSize: "1.8rem" }}>Harta Live a Sesizărilor</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+              <h2 style={{ fontSize: "2.12rem" }}>Harta Live a Sesizărilor</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "1.12rem" }}>
                 Vizualizează incidențele din oraș în timp real pe hartă interactivă.
               </p>
             </div>
@@ -197,8 +197,8 @@ export function HomePage() {
         <div className="container-custom">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "1.75rem" }}>
             <div>
-              <h2 style={{ fontSize: "1.8rem" }}>Ultimele Probleme Raportate</h2>
-              <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+              <h2 style={{ fontSize: "2.12rem" }}>Ultimele Probleme Raportate</h2>
+              <p style={{ color: "var(--text-muted)", fontSize: "1.12rem" }}>
                 Comunitatea se implică activ. Susține sesizările existente prin butonul +1.
               </p>
             </div>
@@ -255,17 +255,17 @@ export function HomePage() {
                   {/* Card Content */}
                   <div style={{ padding: "1.25rem", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <div>
-                      <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#2563eb", marginBottom: "4px" }}>
+                      <div style={{ fontSize: "0.89rem", fontWeight: 700, color: "#2563eb", marginBottom: "4px" }}>
                         {item.code}
                       </div>
-                      <h3 style={{ fontSize: "1.1rem", marginBottom: "0.5rem", lineHeight: 1.3 }}>
+                      <h3 style={{ fontSize: "1.3rem", marginBottom: "0.5rem", lineHeight: 1.3 }}>
                         <Link to={`/problems/${item.id}`} style={{ color: "#0f172a" }}>
                           {item.title}
                         </Link>
                       </h3>
                       <p
                         style={{
-                          fontSize: "0.85rem",
+                          fontSize: "1rem",
                           color: "#64748b",
                           marginBottom: "1rem",
                           display: "-webkit-box",
@@ -285,7 +285,7 @@ export function HomePage() {
                         justifyContent: "space-between",
                         paddingTop: "0.75rem",
                         borderTop: "1px solid #f1f5f9",
-                        fontSize: "0.8rem",
+                        fontSize: "0.94rem",
                         color: "#64748b",
                       }}
                     >

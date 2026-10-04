@@ -12,7 +12,16 @@ export const problemsApi = {
     return api.get(`/problems${queryString ? `?${queryString}` : ""}`);
   },
 
-  getMyProblems: () => api.get("/me/problems"),
+  getMyProblems: (params = {}) => {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        query.append(key, value);
+      }
+    });
+    const queryString = query.toString();
+    return api.get(`/me/problems${queryString ? `?${queryString}` : ""}`);
+  },
 
   // Backendul întoarce { problem }; paginile lucrează direct cu obiectul sesizării.
   getProblem: (id) => api.get(`/problems/${id}`).then((res) => res.problem),

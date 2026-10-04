@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { problemsApi } from "../api/problems.js";
 import { StatusBadge } from "../components/StatusBadge.jsx";
 import { PriorityBadge } from "../components/PriorityBadge.jsx";
-import { PlusCircle, Eye, Layers } from "lucide-react";
+import { PlusCircle, Eye, Layers, ClipboardList, CircleCheck, Clock3 } from "lucide-react";
 
 export function MyProblemsPage() {
   const [problems, setProblems] = useState([]);
@@ -23,42 +23,64 @@ export function MyProblemsPage() {
     loadData();
   }, []);
 
+  const resolvedCount = problems.filter((item) =>
+    ["RESOLVED", "RESOLVED_PENDING_CONFIRMATION"].includes(item.status),
+  ).length;
+  const activeCount = problems.filter((item) =>
+    !["RESOLVED", "RESOLVED_PENDING_CONFIRMATION", "REJECTED", "DUPLICATE"].includes(item.status),
+  ).length;
+
   return (
-    <div className="container-custom" style={{ padding: "2.5rem 1.5rem" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "2rem",
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
-            Sesizările Mele
-          </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
-            Lista tuturor problemelor raportate direct de contul tău.
-          </p>
+    <div className="container-custom my-problems-page">
+      <header className="my-problems-hero">
+        <div className="my-problems-title">
+          <span className="my-problems-icon"><Layers size={22} /></span>
+          <div>
+            <span className="my-problems-eyebrow">Spațiul tău UrbanPulse</span>
+            <h1>Sesizările mele</h1>
+          </div>
         </div>
-
-        <Link to="/problems/create" className="btn btn-primary">
-          <PlusCircle size={18} /> Raportează o Problemă
+        <Link to="/problems/create" className="btn btn-primary my-problems-create">
+          <PlusCircle size={18} /> Raportează o problemă
         </Link>
-      </div>
+      </header>
 
-      <div className="card" style={{ padding: "1.5rem" }}>
+      <section className="my-problems-stats" aria-label="Rezumatul sesizărilor">
+        <article className="my-problems-stat">
+          <span className="my-problems-stat-icon"><ClipboardList size={19} /></span>
+          <div><span>Total sesizări</span><strong>{problems.length}</strong></div>
+        </article>
+        <article className="my-problems-stat my-problems-stat-active">
+          <span className="my-problems-stat-icon"><Clock3 size={19} /></span>
+          <div><span>În desfășurare</span><strong>{activeCount}</strong></div>
+        </article>
+        <article className="my-problems-stat my-problems-stat-resolved">
+          <span className="my-problems-stat-icon"><CircleCheck size={19} /></span>
+          <div><span>Rezolvate</span><strong>{resolvedCount}</strong></div>
+        </article>
+      </section>
+
+      <section className="card my-problems-card">
+        <div className="my-problems-card-heading">
+          <div>
+            <h2>Istoricul sesizărilor</h2>
+            <p>Detalii și status pentru fiecare problemă raportată</p>
+          </div>
+          <span className="my-problems-count">{problems.length} {problems.length === 1 ? "sesizare" : "sesizări"}</span>
+        </div>
         {loading ? (
-          <div style={{ textAlign: "center", padding: "3rem", color: "#64748b" }}>Se încarcă...</div>
+          <div className="my-problems-state">Se încarcă sesizările...</div>
         ) : problems.length === 0 ? (
-          <div style={{ padding: "3rem", textAlign: "center" }}>
-            <p style={{ color: "#64748b", marginBottom: "1rem" }}>Nu ai transmis nicio sesizare până acum.</p>
-            <Link to="/problems/create" className="btn btn-primary btn-sm">
-              <PlusCircle size={16} /> Adaugă o sesizare nouă
+          <div className="my-problems-empty">
+            <span className="my-problems-empty-icon"><ClipboardList size={28} /></span>
+            <h3>Încă nu ai raportat nicio problemă</h3>
+            <p>Trimite prima sesizare și urmărește aici actualizările comunității.</p>
+            <Link to="/problems/create" className="btn btn-primary">
+              <PlusCircle size={17} /> Adaugă o sesizare
             </Link>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
+          <div className="my-problems-table-wrap">
             <table className="custom-table">
               <thead>
                 <tr>
@@ -75,8 +97,8 @@ export function MyProblemsPage() {
               <tbody>
                 {problems.map((item) => (
                   <tr key={item.id}>
-                    <td style={{ fontWeight: 700, color: "#2563eb" }}>{item.code}</td>
-                    <td style={{ fontWeight: 600 }}>{item.title}</td>
+                    <td className="my-problems-code">{item.code}</td>
+                    <td className="my-problems-name">{item.title}</td>
                     <td>{item.category?.name || "Necunoscută"}</td>
                     <td>
                       <StatusBadge status={item.status} />
@@ -84,13 +106,13 @@ export function MyProblemsPage() {
                     <td>
                       <PriorityBadge priority={item.priority} score={item.priorityScore} />
                     </td>
-                    <td style={{ fontWeight: 700, color: "#10b981" }}>+{item.supportCount || 0}</td>
-                    <td style={{ color: "#64748b" }}>
+                    <td className="my-problems-support">+{item.supportCount || 0}</td>
+                    <td className="my-problems-date">
                       {new Date(item.createdAt).toLocaleDateString("ro-RO")}
                     </td>
                     <td>
-                      <Link to={`/problems/${item.id}`} className="btn btn-secondary btn-sm">
-                        <Eye size={14} /> Detalii
+                      <Link to={`/problems/${item.id}`} className="btn btn-secondary btn-sm my-problems-details">
+                        <Eye size={15} /> Vezi detalii
                       </Link>
                     </td>
                   </tr>
@@ -99,7 +121,7 @@ export function MyProblemsPage() {
             </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -69,10 +69,10 @@ export function NotificationsPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>
+          <h1 style={{ fontSize: "2.36rem", marginBottom: "0.5rem" }}>
             Centru de Notificări
           </h1>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.95rem" }}>
+          <p style={{ color: "var(--text-muted)", fontSize: "1.12rem" }}>
             Fii la curent cu toate noutățile despre sesizările tale.
           </p>
         </div>
@@ -121,11 +121,11 @@ export function NotificationsPage() {
                     if (n.link) navigate(n.link);
                   }}
                 >
-                  <div style={{ fontWeight: 700, fontSize: "0.95rem", color: "#0f172a", marginBottom: "2px" }}>
+                  <div style={{ fontWeight: 700, fontSize: "1.12rem", color: "#0f172a", marginBottom: "2px" }}>
                     {n.title}
                   </div>
-                  <div style={{ fontSize: "0.875rem", color: "#475569" }}>{n.message}</div>
-                  <div style={{ fontSize: "0.75rem", color: "#94a3b8", marginTop: "4px" }}>
+                  <div style={{ fontSize: "1.03rem", color: "#475569" }}>{n.message}</div>
+                  <div style={{ fontSize: "0.89rem", color: "#94a3b8", marginTop: "4px" }}>
                     {new Date(n.createdAt).toLocaleString("ro-RO")}
                   </div>
                 </div>

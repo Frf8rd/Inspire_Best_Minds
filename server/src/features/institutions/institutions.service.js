@@ -1,3 +1,4 @@
+import validator from "validator"; // vine cu express-validator; aceeași normalizare ca la înregistrare/login
 import { prisma } from "../../config/database.js";
 import { HttpError } from "../../common/utils/httpError.js";
 
@@ -31,6 +32,20 @@ export async function assertCanManageInstitution(actor, institutionId) {
     throw new HttpError(403, "Trebuie să fii MANAGER al acestei instituții pentru această acțiune.");
   }
   return true;
+}
+
+// Nivelul de acces al unui actor într-o instituție:
+//  - "FULL"   = ADMIN sau MANAGER al instituției (poate tot)
+//  - "MEMBER" = orice alt membru (HANDLER): poate doar să adauge colegi noi cu rol HANDLER
+export async function getInstitutionAccess(actor, institutionId) {
+  if (!actor) throw new HttpError(401, "Neautorizat.");
+  if (actor.role === "ADMIN") return "FULL";
+  if (actor.role !== "STAFF") throw new HttpError(403, "Nu ai permisiuni de administrare.");
+  const membership = await prisma.membership.findUnique({
+    where: { userId_institutionId: { userId: actor.id, institutionId } },
+  });
+  if (!membership) throw new HttpError(403, "Nu faci parte din această instituție.");
+  return membership.role === "MANAGER" ? "FULL" : "MEMBER";
 }
 
 export async function listInstitutions({ type, search }) {
@@ -229,12 +244,20 @@ export async function deleteDepartment(institutionId, departmentId, actor) {
 }
 
 export async function addOrUpdateMember(institutionId, { userId, email, departmentId, role = "HANDLER" }, actor) {
-  await assertCanManageInstitution(actor, institutionId);
+  const access = await getInstitutionAccess(actor, institutionId);
+  // Un simplu membru (HANDLER) poate doar să adauge colegi noi ca HANDLER:
+  // nu poate da rol MANAGER și nu poate modifica un membru existent (altfel ar putea retrograda un manager).
+  if (access === "MEMBER" && role === "MANAGER") {
+    throw new HttpError(403, "Doar un MANAGER poate acorda rolul MANAGER.");
+  }
 
   let targetUserId = userId;
   const normalizedEmail = typeof email === "string" ? email.toLowerCase().trim() : null;
   if (!targetUserId && normalizedEmail) {
-    const user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    // Conturile se salvează cu emailul normalizat (ex. Gmail fără puncte), deci încercăm și forma normalizată.
+    const canonical = String(validator.normalizeEmail(normalizedEmail) || normalizedEmail).toLowerCase();
+    let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+    if (!user && canonical !== normalizedEmail) user = await prisma.user.findUnique({ where: { email: canonical } });
     if (!user) throw new HttpError(404, `Utilizatorul cu emailul ${normalizedEmail} nu există.`);
     targetUserId = user.id;
   }
@@ -242,6 +265,14 @@ export async function addOrUpdateMember(institutionId, { userId, email, departme
 
   const user = await prisma.user.findUnique({ where: { id: targetUserId } });
   if (!user) throw new HttpError(404, "Utilizatorul nu există.");
+  if (!user.isActive) throw new HttpError(400, "Contul acestui utilizator este dezactivat.");
+
+  if (access === "MEMBER") {
+    const already = await prisma.membership.findUnique({
+      where: { userId_institutionId: { userId: targetUserId, institutionId } },
+    });
+    if (already) throw new HttpError(409, "Utilizatorul face deja parte din această instituție.");
+  }
 
   if (departmentId) {
     const dept = await prisma.department.findUnique({ where: { id: departmentId } });
@@ -251,7 +282,7 @@ export async function addOrUpdateMember(institutionId, { userId, email, departme
   }
 
   const validRoles = ["HANDLER", "MANAGER"];
-  const finalRole = validRoles.includes(role) ? role : "HANDLER";
+  const finalRole = access === "MEMBER" ? "HANDLER" : validRoles.includes(role) ? role : "HANDLER";
 
   return prisma.$transaction(async (tx) => {
     // Dacă userul este CITIZEN, îl promovăm automat la STAFF

@@ -57,10 +57,10 @@ export function CitizenDashboardPage() {
         }}
       >
         <div>
-          <h1 style={{ fontSize: "1.8rem", color: "#ffffff", marginBottom: "0.5rem" }}>
+          <h1 style={{ fontSize: "2.12rem", color: "#ffffff", marginBottom: "0.5rem" }}>
             Salut, {user?.name || "Cetățean"}! 👋
           </h1>
-          <p style={{ color: "#bfdbfe", fontSize: "0.95rem", maxWidth: "600px" }}>
+          <p style={{ color: "#bfdbfe", fontSize: "1.12rem", maxWidth: "600px" }}>
             Bine ai venit în panoul tău cetățenesc UrbanPulse. Urmărește stadiul sesizărilor tale și implică-te în rezolvarea problemelor urbane.
           </p>
         </div>
@@ -85,8 +85,8 @@ export function CitizenDashboardPage() {
               <Layers size={22} />
             </div>
             <div>
-              <div style={{ fontSize: "1.5rem", fontWeight: 800 }}>{totalMy}</div>
-              <div style={{ fontSize: "0.8rem", color: "#64748b" }}>Sesizările mele</div>
+              <div style={{ fontSize: "1.77rem", fontWeight: 800 }}>{totalMy}</div>
+              <div style={{ fontSize: "0.94rem", color: "#64748b" }}>Sesizările mele</div>
             </div>
           </div>
         </div>
@@ -97,8 +97,8 @@ export function CitizenDashboardPage() {
               <Clock size={22} />
             </div>
             <div>
-              <div style={{ fontSize: "1.5rem", fontWeight: 800 }}>{activeCount}</div>
-              <div style={{ fontSize: "0.8rem", color: "#64748b" }}>Probleme active</div>
+              <div style={{ fontSize: "1.77rem", fontWeight: 800 }}>{activeCount}</div>
+              <div style={{ fontSize: "0.94rem", color: "#64748b" }}>Probleme active</div>
             </div>
           </div>
         </div>
@@ -109,8 +109,8 @@ export function CitizenDashboardPage() {
               <CheckCircle2 size={22} />
             </div>
             <div>
-              <div style={{ fontSize: "1.5rem", fontWeight: 800 }}>{resolvedCount}</div>
-              <div style={{ fontSize: "0.8rem", color: "#64748b" }}>Rezolvate</div>
+              <div style={{ fontSize: "1.77rem", fontWeight: 800 }}>{resolvedCount}</div>
+              <div style={{ fontSize: "0.94rem", color: "#64748b" }}>Rezolvate</div>
             </div>
           </div>
         </div>
@@ -121,8 +121,8 @@ export function CitizenDashboardPage() {
               <AlertCircle size={22} />
             </div>
             <div>
-              <div style={{ fontSize: "1.5rem", fontWeight: 800 }}>{inReviewCount}</div>
-              <div style={{ fontSize: "0.8rem", color: "#64748b" }}>În verificare</div>
+              <div style={{ fontSize: "1.77rem", fontWeight: 800 }}>{inReviewCount}</div>
+              <div style={{ fontSize: "0.94rem", color: "#64748b" }}>În verificare</div>
             </div>
           </div>
         </div>
@@ -133,8 +133,8 @@ export function CitizenDashboardPage() {
               <Bell size={22} />
             </div>
             <div>
-              <div style={{ fontSize: "1.5rem", fontWeight: 800 }}>{unreadCount}</div>
-              <div style={{ fontSize: "0.8rem", color: "#64748b" }}>Notificări noi</div>
+              <div style={{ fontSize: "1.77rem", fontWeight: 800 }}>{unreadCount}</div>
+              <div style={{ fontSize: "0.94rem", color: "#64748b" }}>Notificări noi</div>
             </div>
           </div>
         </div>
@@ -152,7 +152,7 @@ export function CitizenDashboardPage() {
             borderBottom: "1px solid var(--border-color)",
           }}
         >
-          <h2 style={{ fontSize: "1.25rem" }}>Ultimele Sesizări Transmise</h2>
+          <h2 style={{ fontSize: "1.47rem" }}>Ultimele Sesizări Transmise</h2>
           <Link to="/my-problems" className="btn btn-secondary btn-sm">
             Vezi toate ({totalMy}) <ArrowRight size={16} />
           </Link>

@@ -127,7 +127,7 @@ export function Navbar() {
             <span
               style={{
                 fontFamily: "var(--font-heading)",
-                fontSize: "1.35rem",
+                fontSize: "1.59rem",
                 fontWeight: 800,
                 color: "#0f172a",
                 letterSpacing: "-0.03em",
@@ -251,7 +251,7 @@ export function Navbar() {
                         right: "-2px",
                         backgroundColor: "#ef4444",
                         color: "#ffffff",
-                        fontSize: "0.7rem",
+                        fontSize: "0.83rem",
                         fontWeight: 700,
                         width: "18px",
                         height: "18px",
@@ -291,7 +291,7 @@ export function Navbar() {
                         borderBottom: "1px solid var(--border-color)",
                       }}
                     >
-                      <span style={{ fontWeight: 700, fontSize: "0.95rem" }}>Notificări</span>
+                      <span style={{ fontWeight: 700, fontSize: "1.12rem" }}>Notificări</span>
                       {unreadCount > 0 && (
                         <button
                           onClick={handleMarkAllRead}
@@ -299,7 +299,7 @@ export function Navbar() {
                             background: "transparent",
                             border: "none",
                             color: "#2563eb",
-                            fontSize: "0.75rem",
+                            fontSize: "0.89rem",
                             fontWeight: 600,
                             cursor: "pointer",
                             display: "flex",
@@ -318,7 +318,7 @@ export function Navbar() {
                           textAlign: "center",
                           padding: "1.5rem 0",
                           color: "var(--text-muted)",
-                          fontSize: "0.85rem",
+                          fontSize: "1rem",
                         }}
                       >
                         Nu ai notificări noi.
@@ -339,7 +339,7 @@ export function Navbar() {
                               border: "1px solid",
                               borderColor: n.isRead ? "#f1f5f9" : "#bae6fd",
                               cursor: "pointer",
-                              fontSize: "0.825rem",
+                              fontSize: "0.97rem",
                               transition: "background 0.15s ease",
                             }}
                           >
@@ -377,7 +377,7 @@ export function Navbar() {
                       <Link
                         to="/notifications"
                         onClick={() => setShowNotifDropdown(false)}
-                        style={{ fontSize: "0.8rem", fontWeight: 600, color: "#2563eb" }}
+                        style={{ fontSize: "0.94rem", fontWeight: 600, color: "#2563eb" }}
                       >
                         Vezi toate notificările &rarr;
                       </Link>
@@ -409,7 +409,7 @@ export function Navbar() {
                       backgroundColor: "#2563eb",
                       color: "#ffffff",
                       fontWeight: 700,
-                      fontSize: "0.85rem",
+                      fontSize: "1rem",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -417,7 +417,7 @@ export function Navbar() {
                   >
                     {user.name ? user.name[0].toUpperCase() : "U"}
                   </div>
-                  <span style={{ fontWeight: 600, fontSize: "0.875rem", color: "#334155" }}>
+                  <span style={{ fontWeight: 600, fontSize: "1.03rem", color: "#334155" }}>
                     {user.name.split(" ")[0]}
                   </span>
                 </button>
@@ -436,10 +436,10 @@ export function Navbar() {
                     }}
                   >
                     <div style={{ padding: "0.5rem 0.75rem", borderBottom: "1px solid #f1f5f9" }}>
-                      <div style={{ fontWeight: 700, fontSize: "0.9rem", color: "#0f172a" }}>
+                      <div style={{ fontWeight: 700, fontSize: "1.06rem", color: "#0f172a" }}>
                         {user.name}
                       </div>
-                      <div style={{ fontSize: "0.75rem", color: "#64748b" }}>{user.email}</div>
+                      <div style={{ fontSize: "0.89rem", color: "#64748b" }}>{user.email}</div>
                     </div>
 
                     <Link
@@ -450,7 +450,7 @@ export function Navbar() {
                         alignItems: "center",
                         gap: "0.5rem",
                         padding: "0.5rem 0.75rem",
-                        fontSize: "0.85rem",
+                        fontSize: "1rem",
                         color: "#334155",
                         borderRadius: "6px",
                       }}
@@ -466,7 +466,7 @@ export function Navbar() {
                         alignItems: "center",
                         gap: "0.5rem",
                         padding: "0.5rem 0.75rem",
-                        fontSize: "0.85rem",
+                        fontSize: "1rem",
                         color: "#334155",
                         borderRadius: "6px",
                       }}
@@ -482,7 +482,7 @@ export function Navbar() {
                         alignItems: "center",
                         gap: "0.5rem",
                         padding: "0.5rem 0.75rem",
-                        fontSize: "0.85rem",
+                        fontSize: "1rem",
                         color: "#ef4444",
                         background: "transparent",
                         border: "none",
