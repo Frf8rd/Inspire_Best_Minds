@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { problemsApi } from "../api/problems.js";
 import { complaintsApi } from "../api/complaints.js";
+import { categoriesApi } from "../api/categories.js";
+import { assetUrl } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { StatusBadge } from "../components/StatusBadge.jsx";
@@ -23,6 +25,7 @@ import {
   Send,
   Lock,
   Share2,
+  MapPin,
 } from "lucide-react";
 
 export function ProblemDetailsPage() {
@@ -38,7 +41,7 @@ export function ProblemDetailsPage() {
 
   // Comment Form state
   const [newComment, setNewComment] = useState("");
-  const [commentType, setCommentType] = useState("PUBLIC");
+  const [commentVisibility, setCommentVisibility] = useState("PUBLIC");
   const [submittingComment, setSubmittingComment] = useState(false);
 
   // Resolution Confirmation modal / state
@@ -50,6 +53,12 @@ export function ProblemDetailsPage() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [targetStatus, setTargetStatus] = useState("IN_PROGRESS");
   const [statusComment, setStatusComment] = useState("");
+
+  // Edit Problem Modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [editForm, setEditForm] = useState({ title: "", description: "", address: "", categoryId: "" });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   // Formal Complaint Modal
   const [showComplaintModal, setShowComplaintModal] = useState(false);
@@ -117,8 +126,8 @@ export function ProblemDetailsPage() {
     setSubmittingComment(true);
     try {
       const added = await problemsApi.addComment(id, {
-        content: newComment.trim(),
-        type: commentType,
+        body: newComment.trim(),
+        visibility: commentVisibility,
       });
       setComments((prev) => [...prev, added]);
       setNewComment("");
@@ -137,7 +146,7 @@ export function ProblemDetailsPage() {
         confirmed: resolutionOpinion,
         comment: resolutionComment,
       });
-      setProblem(updated);
+      setProblem((prev) => ({ ...prev, ...updated }));
       setShowConfirmModal(false);
       addToast(
         resolutionOpinion
@@ -158,7 +167,7 @@ export function ProblemDetailsPage() {
         toStatus: targetStatus,
         comment: statusComment,
       });
-      setProblem(updated);
+      setProblem((prev) => ({ ...prev, ...updated }));
       setShowStatusModal(false);
       setStatusComment("");
       addToast(`Statusul a fost schimbat în ${targetStatus}`, "success");
@@ -177,6 +186,58 @@ export function ProblemDetailsPage() {
       loadProblemDetails();
     } catch (err) {
       addToast(err.message || "Eroare la expedierea sesizării formale.", "error");
+    }
+  };
+
+  // Edit Problem Handlers
+  const openEditModal = async () => {
+    setEditForm({
+      title: problem.title || "",
+      description: problem.description || "",
+      address: problem.address || "",
+      categoryId: problem.category?.id || "",
+    });
+    setShowEditModal(true);
+    if (categories.length === 0) {
+      try {
+        const res = await categoriesApi.getCategories();
+        setCategories(res.categories || []);
+      } catch {
+        addToast("Nu s-au putut încărca categoriile.", "error");
+      }
+    }
+  };
+
+  const handleSaveEdit = async (e) => {
+    e.preventDefault();
+    const title = editForm.title.trim();
+    if (title.length < 3 || title.length > 150) {
+      addToast("Titlul trebuie să aibă între 3 și 150 de caractere.", "warning");
+      return;
+    }
+
+    // Trimitem doar câmpurile modificate; schimbarea categoriei redirecționează sesizarea.
+    const payload = { title };
+    if (editForm.description.trim() !== (problem.description || "")) {
+      payload.description = editForm.description.trim();
+    }
+    if (editForm.address.trim() !== (problem.address || "")) {
+      payload.address = editForm.address.trim();
+    }
+    if (editForm.categoryId && editForm.categoryId !== problem.category?.id) {
+      payload.categoryId = editForm.categoryId;
+    }
+
+    setSavingEdit(true);
+    try {
+      await problemsApi.updateProblem(id, payload);
+      setShowEditModal(false);
+      addToast("Sesizarea a fost actualizată.", "success");
+      loadProblemDetails();
+    } catch (err) {
+      addToast(err.message || "Eroare la actualizarea sesizării.", "error");
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -211,7 +272,9 @@ export function ProblemDetailsPage() {
     );
   }
 
-  const isAuthor = user && user.id === problem.reporterId;
+  // GET /problems/:id întoarce reporter: { id, name }, nu reporterId.
+  const isAuthor = Boolean(user && problem.reporter && user.id === problem.reporter.id);
+  const canManage = isAuthor || user?.role === "ADMIN"; // la fel ca în backend (proprietar sau admin)
   const isStaff = user && (user.role === "STAFF" || user.role === "ADMIN");
 
   return (
@@ -229,10 +292,15 @@ export function ProblemDetailsPage() {
 
           {/* Actions Bar */}
           <div style={{ display: "flex", gap: "0.5rem" }}>
-            {isAuthor && (
-              <button onClick={handleDelete} className="btn btn-danger btn-sm">
-                <Trash2 size={16} /> Șterge
-              </button>
+            {canManage && (
+              <>
+                <button onClick={openEditModal} className="btn btn-outline btn-sm">
+                  <Edit size={16} /> Editează
+                </button>
+                <button onClick={handleDelete} className="btn btn-danger btn-sm">
+                  <Trash2 size={16} /> Șterge
+                </button>
+              </>
             )}
 
             {isStaff && (
@@ -318,9 +386,9 @@ export function ProblemDetailsPage() {
                 <h4 style={{ fontSize: "0.95rem", marginBottom: "0.75rem", color: "#64748b" }}>Fotografii atașate</h4>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "0.75rem" }}>
                   {problem.photos.map((ph) => (
-                    <a key={ph.id} href={ph.publicPath} target="_blank" rel="noopener noreferrer">
+                    <a key={ph.id} href={assetUrl(ph.publicPath)} target="_blank" rel="noopener noreferrer">
                       <img
-                        src={ph.publicPath}
+                        src={assetUrl(ph.publicPath)}
                         alt="Photo"
                         style={{
                           width: "100%",
@@ -409,8 +477,8 @@ export function ProblemDetailsPage() {
                     <select
                       className="form-select"
                       style={{ width: "auto", fontSize: "0.8rem" }}
-                      value={commentType}
-                      onChange={(e) => setCommentType(e.target.value)}
+                      value={commentVisibility}
+                      onChange={(e) => setCommentVisibility(e.target.value)}
                     >
                       <option value="PUBLIC">Comentariu Public (vizibil tuturor)</option>
                       <option value="INTERNAL">Comentariu Intern Staff (privat)</option>
@@ -438,21 +506,21 @@ export function ProblemDetailsPage() {
                   style={{
                     padding: "0.875rem 1rem",
                     borderRadius: "10px",
-                    backgroundColor: c.type === "INTERNAL" ? "#fef3c7" : "#f8fafc",
+                    backgroundColor: c.visibility === "INTERNAL" ? "#fef3c7" : "#f8fafc",
                     border: "1px solid",
-                    borderColor: c.type === "INTERNAL" ? "#fde68a" : "#e2e8f0",
+                    borderColor: c.visibility === "INTERNAL" ? "#fde68a" : "#e2e8f0",
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.375rem" }}>
                     <span style={{ fontWeight: 700, fontSize: "0.85rem", color: "#0f172a" }}>
-                      {c.author?.name || "Utilizator"} {c.type === "INTERNAL" && <span style={{ color: "#b45309", fontSize: "0.75rem" }}>(Intern Staff)</span>}
+                      {c.author?.name || "Utilizator"} {c.visibility === "INTERNAL" && <span style={{ color: "#b45309", fontSize: "0.75rem" }}>(Intern Staff)</span>}
                     </span>
                     <span style={{ fontSize: "0.75rem", color: "#64748b" }}>
                       {new Date(c.createdAt).toLocaleString("ro-RO")}
                     </span>
                   </div>
                   <p style={{ fontSize: "0.9rem", color: "#334155", margin: 0, lineHeight: 1.4 }}>
-                    {c.content}
+                    {c.body}
                   </p>
                 </div>
               ))}
@@ -583,6 +651,73 @@ export function ProblemDetailsPage() {
             Salvează Statusul
           </button>
         </div>
+      </Modal>
+
+      {/* Edit Problem Modal */}
+      <Modal isOpen={showEditModal} onClose={() => setShowEditModal(false)} title="Editează Sesizarea">
+        <form onSubmit={handleSaveEdit}>
+          <div className="form-group">
+            <label className="form-label">Titlu</label>
+            <input
+              type="text"
+              className="form-input"
+              value={editForm.title}
+              maxLength={150}
+              onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Descriere</label>
+            <textarea
+              className="form-textarea"
+              rows={4}
+              value={editForm.description}
+              onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Adresă</label>
+            <input
+              type="text"
+              className="form-input"
+              value={editForm.address}
+              onChange={(e) => setEditForm((f) => ({ ...f, address: e.target.value }))}
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label">Categorie</label>
+            <select
+              className="form-select"
+              value={editForm.categoryId}
+              onChange={(e) => setEditForm((f) => ({ ...f, categoryId: e.target.value }))}
+            >
+              {categories.length === 0 && problem.category && (
+                <option value={problem.category.id}>{problem.category.name}</option>
+              )}
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <div style={{ fontSize: "0.75rem", color: "#64748b", marginTop: "0.25rem" }}>
+              Schimbarea categoriei poate redirecționa sesizarea către alt departament.
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1rem" }}>
+            <button type="button" onClick={() => setShowEditModal(false)} className="btn btn-secondary btn-sm">
+              Anulează
+            </button>
+            <button type="submit" className="btn btn-primary btn-sm" disabled={savingEdit}>
+              {savingEdit ? "Se salvează..." : "Salvează modificările"}
+            </button>
+          </div>
+        </form>
       </Modal>
 
       {/* Formal Complaint Modal */}

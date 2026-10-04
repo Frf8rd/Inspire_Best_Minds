@@ -14,6 +14,7 @@ import { LoginPage } from "./pages/LoginPage.jsx";
 import { RegisterPage } from "./pages/RegisterPage.jsx";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage.jsx";
 import { ResetPasswordPage } from "./pages/ResetPasswordPage.jsx";
+import { GoogleSuccessPage } from "./pages/GoogleSuccessPage.jsx";
 
 import { CitizenDashboardPage } from "./pages/CitizenDashboardPage.jsx";
 import { MapPage } from "./pages/MapPage.jsx";
@@ -43,6 +44,7 @@ export default function App() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/auth/google/success" element={<GoogleSuccessPage />} />
                 <Route path="/map" element={<MapPage />} />
                 <Route path="/problems" element={<ProblemsListPage />} />
                 <Route path="/problems/:id" element={<ProblemDetailsPage />} />

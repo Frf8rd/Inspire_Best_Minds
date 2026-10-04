@@ -14,28 +14,37 @@ export const problemsApi = {
 
   getMyProblems: () => api.get("/me/problems"),
 
-  getProblem: (id) => api.get(`/problems/${id}`),
+  // Backendul întoarce { problem }; paginile lucrează direct cu obiectul sesizării.
+  getProblem: (id) => api.get(`/problems/${id}`).then((res) => res.problem),
 
   createProblem: (formData) => api.post("/problems", formData),
 
-  updateProblem: (id, data) => api.put(`/problems/${id}`, data),
+  updateProblem: (id, data) =>
+    api.put(`/problems/${id}`, data).then((res) => res.problem),
 
   deleteProblem: (id) => api.delete(`/problems/${id}`),
 
-  getHistory: (id) => api.get(`/problems/${id}/history`),
+  // Backendul întoarce { history: [...] }.
+  getHistory: (id) => api.get(`/problems/${id}/history`).then((res) => res.history || []),
 
+  // Backendul citește req.body.status (nu toStatus) și întoarce { message, problem }.
   updateStatus: (id, { toStatus, comment, assigneeId }) =>
-    api.patch(`/problems/${id}/status`, { toStatus, comment, assigneeId }),
+    api
+      .patch(`/problems/${id}/status`, { status: toStatus, comment, assigneeId })
+      .then((res) => res.problem),
 
   toggleSupport: (id) => api.post(`/problems/${id}/support`),
 
   confirmResolution: (id, { confirmed, comment }) =>
-    api.post(`/problems/${id}/confirm-resolution`, { confirmed, comment }),
+    api
+      .post(`/problems/${id}/confirm-resolution`, { confirmed, comment })
+      .then((res) => res.problem),
 
   getComments: (id) => api.get(`/problems/${id}/comments`),
 
-  addComment: (id, { content, type = "PUBLIC" }) =>
-    api.post(`/problems/${id}/comments`, { content, type }),
+  // Backendul așteaptă { body, visibility } și întoarce { message, comment }.
+  addComment: (id, { body, visibility = "PUBLIC" }) =>
+    api.post(`/problems/${id}/comments`, { body, visibility }).then((res) => res.comment),
 
   deleteComment: (reportId, commentId) =>
     api.delete(`/problems/${reportId}/comments/${commentId}`),

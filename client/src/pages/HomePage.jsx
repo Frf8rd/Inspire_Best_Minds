@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { problemsApi } from "../api/problems.js";
+import { assetUrl } from "../api/client.js";
 import { analyticsApi } from "../api/analytics.js";
 import { LeafletMap } from "../components/LeafletMap.jsx";
 import { StatusBadge } from "../components/StatusBadge.jsx";
@@ -31,7 +32,7 @@ export function HomePage() {
         ]);
 
         if (problemsRes.status === "fulfilled") {
-          setProblems(problemsRes.value.items || []);
+          setProblems((problemsRes.value.items || []).filter((p) => !p.duplicateOfId));
         }
         if (statsRes.status === "fulfilled") {
           setStats(statsRes.value);
@@ -226,7 +227,7 @@ export function HomePage() {
                   <div style={{ height: "180px", backgroundColor: "#e2e8f0", position: "relative", overflow: "hidden" }}>
                     {item.photos && item.photos.length > 0 ? (
                       <img
-                        src={item.photos[0].publicPath}
+                        src={assetUrl(item.photos[0].publicPath)}
                         alt={item.title}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />

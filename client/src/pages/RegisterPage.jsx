@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { UserPlus, Mail, Lock, User, Phone } from "lucide-react";
+import { validatePassword } from "../utils/validation.js";
 
 export function RegisterPage() {
   const { register } = useAuth();
@@ -26,8 +27,9 @@ export function RegisterPage() {
       addToast("Parolele introduse nu coincid.", "warning");
       return;
     }
-    if (password.length < 8) {
-      addToast("Parola trebuie să aibă cel puțin 8 caractere.", "warning");
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      addToast(passwordError, "warning");
       return;
     }
 
@@ -145,7 +147,7 @@ export function RegisterPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Parolă (min. 8 caractere)</label>
+            <label className="form-label">Parolă (min. 6 caractere, cu cel puțin o cifră)</label>
             <div style={{ position: "relative" }}>
               <input
                 type="password"

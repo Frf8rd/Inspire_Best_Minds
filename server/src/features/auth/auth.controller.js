@@ -24,6 +24,8 @@ export const toPublicJSON = (user, extra = {}) => {
     email: user.email,
     role: user.role, // CITIZEN | STAFF | ADMIN
     phone: user.phone ?? null,
+    bio: user.bio ?? null,
+    avatarUrl: user.avatarPath ? `/${user.avatarPath}` : null,
     isActive: user.isActive,
     createdAt: user.createdAt,
     ...extra,
@@ -117,9 +119,7 @@ export const googleCallback = async (req, res) => {
     }
 
     await issueSession(prisma, res, user);
-
-    const userData = encodeURIComponent(JSON.stringify(toPublicJSON(user)));
-    return res.redirect(`${clientUrl}/auth/google/success?user=${userData}`);
+    return res.redirect(`${clientUrl}/auth/google/success`);
   } catch (error) {
     console.error("Google callback error:", error);
     return res.redirect(`${clientUrl}/login?error=server_error`);
@@ -331,6 +331,14 @@ export const updateMe = async (req, res) => {
     }
     if (req.body.phone !== undefined) {
       updateData.phone = req.body.phone ? String(req.body.phone).trim() : null;
+    }
+
+    if (req.body.bio !== undefined) {
+      const bio = req.body.bio ? String(req.body.bio).trim() : "";
+      if (bio.length > 300) {
+        return res.status(400).json({ message: "Bio poate avea cel mult 300 de caractere." });
+      }
+      updateData.bio = bio || null;
     }
 
     if (!Object.keys(updateData).length) {

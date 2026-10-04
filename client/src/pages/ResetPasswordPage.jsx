@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { authApi } from "../api/auth.js";
 import { useToast } from "../context/ToastContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
+import { validatePassword } from "../utils/validation.js";
 import { Lock, ArrowLeft } from "lucide-react";
 
 export function ResetPasswordPage() {
@@ -9,6 +11,7 @@ export function ResetPasswordPage() {
   const token = searchParams.get("token");
   const { addToast } = useToast();
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,8 +23,9 @@ export function ResetPasswordPage() {
       addToast("Tokenul de resetare lipsește din URL.", "error");
       return;
     }
-    if (!newPassword || newPassword.length < 8) {
-      addToast("Parola nouă trebuie să aibă cel puțin 8 caractere.", "warning");
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      addToast(passwordError, "warning");
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -31,9 +35,11 @@ export function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      await authApi.resetPassword({ token, newPassword });
-      addToast("Parola a fost resetată cu succes! Te poți autentifica.", "success");
-      navigate("/login");
+      // Backendul cere { token, password } și autentifică userul după resetare.
+      await authApi.resetPassword({ token, password: newPassword });
+      await refreshUser();
+      addToast("Parola a fost resetată cu succes! Ești autentificat.", "success");
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       addToast(err.message || "Token invalid sau expirat.", "error");
     } finally {

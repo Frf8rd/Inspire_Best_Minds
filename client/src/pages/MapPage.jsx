@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { problemsApi } from "../api/problems.js";
 import { categoriesApi } from "../api/categories.js";
 import { LeafletMap } from "../components/LeafletMap.jsx";
@@ -18,33 +18,47 @@ export function MapPage() {
   const [priorityFilter, setPriorityFilter] = useState("");
   const [selectedProblem, setSelectedProblem] = useState(null);
 
+  // Zona vizibilă a hărții; sesizările se încarcă doar pentru ea.
+  const [bounds, setBounds] = useState(null);
+  const requestIdRef = useRef(0);
+
+  const handleBoundsChange = useCallback((next) => setBounds(next), []);
+  const handleMarkerClick = useCallback((p) => setSelectedProblem(p), []);
+
   useEffect(() => {
+    categoriesApi
+      .getCategories()
+      .then((res) => setCategories(res.categories || []))
+      .catch((err) => console.error("Map categories error:", err));
+  }, []);
+
+  useEffect(() => {
+    if (!bounds) return; // harta nu și-a raportat încă zona vizibilă
+    const requestId = ++requestIdRef.current;
+
     async function loadData() {
       try {
-        const [probsRes, catsRes] = await Promise.allSettled([
-          problemsApi.getProblems({
-            status: statusFilter || undefined,
-            category: categoryFilter || undefined,
-            priority: priorityFilter || undefined,
-            limit: 100,
-          }),
-          categoriesApi.getCategories(),
-        ]);
-
-        if (probsRes.status === "fulfilled") {
-          setProblems(probsRes.value.items || []);
-        }
-        if (catsRes.status === "fulfilled") {
-          setCategories(catsRes.value.categories || []);
-        }
+        const res = await problemsApi.getProblems({
+          status: statusFilter || undefined,
+          category: categoryFilter || undefined,
+          priority: priorityFilter || undefined,
+          minLat: bounds.minLat,
+          maxLat: bounds.maxLat,
+          minLng: bounds.minLng,
+          maxLng: bounds.maxLng,
+          limit: 100,
+        });
+        if (requestId !== requestIdRef.current) return; // a venit între timp o cerere mai nouă
+        // Duplicatele nu primesc marker propriu; sunt grupate sub sesizarea principală.
+        setProblems((res.items || []).filter((p) => !p.duplicateOfId));
       } catch (err) {
         console.error("Map page load error:", err);
       } finally {
-        setLoading(false);
+        if (requestId === requestIdRef.current) setLoading(false);
       }
     }
     loadData();
-  }, [statusFilter, categoryFilter, priorityFilter]);
+  }, [bounds, statusFilter, categoryFilter, priorityFilter]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "calc(100vh - 70px)" }}>
@@ -121,7 +135,7 @@ export function MapPage() {
         </div>
 
         <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#64748b" }}>
-          {problems.length} sesizări găsite pe hartă
+          {problems.length} sesizări în zona vizibilă
         </div>
       </div>
 
@@ -131,7 +145,9 @@ export function MapPage() {
           <LeafletMap
             problems={problems}
             height="100%"
-            onMarkerClick={(p) => setSelectedProblem(p)}
+            fitToMarkers={false}
+            onBoundsChange={handleBoundsChange}
+            onMarkerClick={handleMarkerClick}
           />
         </div>
 

@@ -24,7 +24,7 @@ export function CitizenDashboardPage() {
     async function loadData() {
       try {
         const res = await problemsApi.getMyProblems();
-        setMyProblems(res.problems || []);
+        setMyProblems(res.items || []);
       } catch (err) {
         console.error("Error loading user dashboard:", err);
       } finally {

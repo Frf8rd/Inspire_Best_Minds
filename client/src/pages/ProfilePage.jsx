@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useToast } from "../context/ToastContext.jsx";
 import { authApi } from "../api/auth.js";
 import { User, Mail, Phone, Lock, Save, Shield } from "lucide-react";
+import { validatePassword } from "../utils/validation.js";
 
 export function ProfilePage() {
   const { user, updateProfile } = useAuth();
@@ -42,8 +43,9 @@ export function ProfilePage() {
       addToast("Toate câmpurile pentru parolă sunt obligatorii.", "warning");
       return;
     }
-    if (newPassword.length < 8) {
-      addToast("Noua parolă trebuie să aibă cel puțin 8 caractere.", "warning");
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      addToast(passwordError, "warning");
       return;
     }
     if (newPassword !== confirmNewPassword) {
@@ -141,7 +143,7 @@ export function ProfilePage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Parola Nouă (min. 8 caractere)</label>
+            <label className="form-label">Parola Nouă (min. 6 caractere, cu cel puțin o cifră)</label>
             <input
               type="password"
               className="form-input"

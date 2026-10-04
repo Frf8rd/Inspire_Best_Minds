@@ -4,20 +4,35 @@ import { notificationsApi } from "../api/notifications.js";
 
 const AuthContext = createContext(null);
 
+function hasSessionCookies() {
+  return document.cookie.split("; ").some((cookie) =>
+    cookie.startsWith("accessToken=") || cookie.startsWith("refreshToken=")
+  );
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Întoarce userul curent (sau null), ca apelanții să poată decide ce urmează.
   const fetchMe = async () => {
+    if (!hasSessionCookies()) {
+      setUser(null);
+      setLoading(false);
+      return null;
+    }
+
     try {
       const data = await authApi.getMe();
       setUser(data.user);
       if (data.user) {
         fetchUnreadNotificationsCount();
       }
+      return data.user || null;
     } catch {
       setUser(null);
+      return null;
     } finally {
       setLoading(false);
     }
@@ -34,6 +49,16 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     fetchMe();
+  }, []);
+
+  // client.js emite acest eveniment când sesiunea a expirat și refresh-ul a eșuat.
+  useEffect(() => {
+    const handleExpired = () => {
+      setUser(null);
+      setUnreadCount(0);
+    };
+    window.addEventListener("auth:expired", handleExpired);
+    return () => window.removeEventListener("auth:expired", handleExpired);
   }, []);
 
   const login = async (credentials) => {
@@ -69,6 +94,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
+        setUser,
         loading,
         unreadCount,
         login,

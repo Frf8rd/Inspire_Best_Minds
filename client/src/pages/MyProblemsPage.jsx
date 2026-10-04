@@ -13,7 +13,7 @@ export function MyProblemsPage() {
     async function loadData() {
       try {
         const res = await problemsApi.getMyProblems();
-        setProblems(res.problems || []);
+        setProblems(res.items || []);
       } catch (err) {
         console.error("Error loading my problems:", err);
       } finally {

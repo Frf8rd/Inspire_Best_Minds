@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { problemsApi } from "../api/problems.js";
+import { assetUrl } from "../api/client.js";
 import { categoriesApi } from "../api/categories.js";
 import { StatusBadge } from "../components/StatusBadge.jsx";
 import { PriorityBadge } from "../components/PriorityBadge.jsx";
@@ -42,7 +43,8 @@ export function ProblemsListPage() {
         ]);
 
         if (probsRes.status === "fulfilled") {
-          let items = probsRes.value.items || [];
+          // Duplicatele sunt grupate sub sesizarea principală, nu se afișează separat.
+          let items = (probsRes.value.items || []).filter((p) => !p.duplicateOfId);
           if (search.trim()) {
             const query = search.toLowerCase();
             items = items.filter(
@@ -203,7 +205,7 @@ export function ProblemsListPage() {
               <div style={{ height: "180px", backgroundColor: "#e2e8f0", position: "relative", overflow: "hidden" }}>
                 {item.photos && item.photos.length > 0 ? (
                   <img
-                    src={item.photos[0].publicPath}
+                    src={assetUrl(item.photos[0].publicPath)}
                     alt={item.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
