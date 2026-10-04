@@ -48,7 +48,7 @@ const variants = {
     spinner: colors.accentText,
   },
   secondary: {
-    container: { backgroundColor: colors.surfaceRaised, borderWidth: 1, borderColor: colors.borderStrong } as ViewStyle,
+    container: { backgroundColor: colors.surfaceMuted, borderWidth: 1, borderColor: colors.borderStrong } as ViewStyle,
     textColor: colors.text,
     spinner: colors.text,
   },
@@ -64,10 +64,11 @@ const styles = StyleSheet.create({
     minHeight: layout.minTouch,
     borderRadius: radius.md,
     paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm + 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { fontSize: 15 },
-  pressed: { opacity: 0.85 },
+  title: { fontSize: 15, fontWeight: '700' },
+  pressed: { transform: [{ scale: 0.99 }] },
   inactive: { opacity: 0.55 },
 });

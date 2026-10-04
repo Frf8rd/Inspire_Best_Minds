@@ -6,7 +6,7 @@ export default function RegisterScreen() {
   return (
     <AuthLayout
       title="Creează cont"
-      subtitle="Durează un minut. Poți raporta prima problemă imediat după."
+      subtitle="Începe în câteva secunde și raportează prima problemă imediat."
       footer={<AuthSwitch prompt="Ai deja cont?" action="Intră în cont" href="/login" />}>
       <RegisterForm />
     </AuthLayout>

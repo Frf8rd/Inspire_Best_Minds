@@ -6,7 +6,7 @@ export default function ForgotPasswordScreen() {
   return (
     <AuthLayout
       title="Resetează parola"
-      subtitle="Îți trimitem pe email un link valabil 10 minute."
+      subtitle="Îți trimitem pe email un link securizat, valabil 10 minute."
       footer={<AuthSwitch prompt="Ți-ai amintit parola?" action="Intră în cont" href="/login" />}>
       <ForgotPasswordForm />
     </AuthLayout>

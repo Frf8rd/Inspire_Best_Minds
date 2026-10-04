@@ -11,7 +11,7 @@ export default function LoginScreen() {
   return (
     <AuthLayout
       title="Intră în cont"
-      subtitle="Urmărește sesizările tale și raportează probleme din oraș."
+      subtitle="Accesează dashboardul tău și urmărește sesizările în timp real."
       footer={<AuthSwitch prompt="Nu ai cont încă?" action="Creează cont" href="/register" />}>
       <LoginForm initialError={getOAuthErrorMessage(error)} />
     </AuthLayout>

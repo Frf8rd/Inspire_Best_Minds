@@ -20,10 +20,10 @@ export function Text({ variant = 'body', tone = 'default', style, ...rest }: Tex
 }
 
 const styles = StyleSheet.create({
-  display: { fontSize: 36, lineHeight: 42, fontWeight: '700', letterSpacing: -0.6 },
-  title: { fontSize: 26, lineHeight: 32, fontWeight: '700', letterSpacing: -0.3 },
-  heading: { fontSize: 18, lineHeight: 24, fontWeight: '600' },
-  body: { fontSize: 15, lineHeight: 22, fontWeight: '400' },
-  label: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
-  caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' },
+  display: { fontSize: 40, lineHeight: 46, fontWeight: '700', letterSpacing: -0.8 },
+  title: { fontSize: 28, lineHeight: 34, fontWeight: '700', letterSpacing: -0.4 },
+  heading: { fontSize: 20, lineHeight: 26, fontWeight: '600' },
+  body: { fontSize: 16, lineHeight: 24, fontWeight: '400' },
+  label: { fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  caption: { fontSize: 12, lineHeight: 18, fontWeight: '500' },
 });
