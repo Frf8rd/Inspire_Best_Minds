@@ -72,7 +72,7 @@ export default function MapPage({ reports, categories = CATEGORIES, openReport, 
         radius: report.id === selectedReportId ? 12 : 9,
         color: '#fff',
         weight: report.id === selectedReportId ? 3 : 2,
-        fillColor: STATUSES[report.st][2],
+        fillColor: STATUSES[report.st]?.[2] || '#6b7280',
         fillOpacity: 1,
       })
         .addTo(markers)
@@ -174,8 +174,8 @@ export default function MapPage({ reports, categories = CATEGORIES, openReport, 
                 <p>{selectedReport.desc || selectedReport.title}</p>
                 <div className="map-selected-report-meta">
                   <small>{formatDate(selectedReport.date, locale)}</small>
-                  <span className={`status-badge ${STATUSES[selectedReport.st][1]}`}>
-                    {statusLabel(locale, selectedReport.st, STATUSES[selectedReport.st][0])}
+                  <span className={`status-badge ${STATUSES[selectedReport.st]?.[1] || 'pending'}`}>
+                    {statusLabel(locale, selectedReport.st, STATUSES[selectedReport.st]?.[0] || 'Status necunoscut')}
                   </span>
                 </div>
                 <div className="map-selected-report-location">

@@ -84,7 +84,7 @@ export default function AuthPage({ actions, t, onExit, initialMode = 'login' }) 
       </button>
       <section className="login-intro" aria-labelledby="login-headline">
         <div className="login-brand">
-          <div className="logo">UP</div>
+          <div className="logo"><img className="brand-mark-image" src="/logo.png" alt="" /></div>
           <span>{t('brandTagline')}</span>
         </div>
         <p className="login-kicker">{t('loginKicker')}</p>

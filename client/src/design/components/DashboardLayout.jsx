@@ -33,7 +33,6 @@ export default function DashboardLayout({ activePage, user, onLogout, isGuest = 
     ...(!isGuest && user.serverRole === 'STAFF' ? ['staff'] : []),
     ...(!isGuest && user.serverRole === 'ADMIN' ? ['staff', 'admin'] : []),
   ];
-  const mobileNavigation = ['home', 'map', 'report', ...(!isGuest ? ['profile'] : [])];
   const labels = {
     'my-problems': 'Sesizările mele',
     notifications: 'Notificări',
@@ -62,8 +61,8 @@ export default function DashboardLayout({ activePage, user, onLogout, isGuest = 
           }}
         >
           <div className="sidebar-header">
-            <div className="logo">UP</div>
-            <span className="logo-text">UrbanPulse</span>
+            <div className="logo"><img className="brand-mark-image" src="/logo.png" alt="" /></div>
+            <span className="logo-text">UrbanAlert</span>
           </div>
           <ul className="nav-menu">
             <li className="nav-section">
@@ -130,7 +129,7 @@ export default function DashboardLayout({ activePage, user, onLogout, isGuest = 
           <footer className="site-footer">
             <div className="site-footer-main">
               <section className="site-footer-about">
-                <strong className="site-footer-brand">UrbanPulse</strong>
+                <strong className="site-footer-brand">UrbanAlert</strong>
                 <p>{t('footerTagline')}</p>
                 <span>{t('footerAboutText')}</span>
               </section>
@@ -148,13 +147,13 @@ export default function DashboardLayout({ activePage, user, onLogout, isGuest = 
             </div>
             <div className="site-footer-bottom">
               <small className="site-footer-copyright">{t('footerCopyright')}</small>
-              <small>UrbanPulse · Chișinău</small>
+              <small>UrbanAlert · Chișinău</small>
             </div>
           </footer>
         </main>
       </div>
-      <nav className="bottom">
-        {mobileNavigation.map((page) => (
+      <nav className="bottom" aria-label={t('menu')}>
+        {navigation.map((page) => (
           <Link
             key={page}
             className={page === activePage ? 'active' : ''}

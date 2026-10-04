@@ -103,7 +103,7 @@ export function HomePage() {
             </h1>
 
             <p style={{ fontSize: "1.33rem", color: "#94a3b8", lineHeight: 1.6, marginBottom: "2rem" }}>
-              UrbanPulse conectează cetățenii cu instituțiile responsabile în timp real. Raportează gropi, avarii, iluminat deficitar sau deșeuri și urmărește rezolvarea tichetului tău pas cu pas.
+              UrbanAlert conectează cetățenii cu instituțiile responsabile în timp real. Raportează gropi, avarii, iluminat deficitar sau deșeuri și urmărește rezolvarea tichetului tău pas cu pas.
             </p>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>

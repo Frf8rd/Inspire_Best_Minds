@@ -29,7 +29,7 @@ export async function createNotification({
     if (user?.email) {
       await sendEmail({
         to: user.email,
-        subject: `[UrbanPulse] ${title}`,
+        subject: `[UrbanAlert] ${title}`,
         html: `
           <h3>Salut, ${escapeHtml(user.name || "Cetățean")}</h3>
           <p>${escapeHtml(message)}</p>

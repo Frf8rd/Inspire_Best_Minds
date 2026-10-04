@@ -102,7 +102,7 @@ export function LoginPage() {
       >
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <h2 style={{ fontSize: "2.06rem", color: "#0f172a", marginBottom: "0.5rem" }}>
-            Autentificare <span style={{ color: "#2563eb" }}>UrbanPulse</span>
+            Autentificare <span style={{ color: "#2563eb" }}>UrbanAlert</span>
           </h2>
           <p style={{ fontSize: "1.06rem", color: "#64748b" }}>
             Introdu datele de acces pentru a continua

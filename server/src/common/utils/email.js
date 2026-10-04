@@ -7,7 +7,7 @@ const createResendClient = () => {
   return new Resend(process.env.RESEND_API_KEY.trim());
 };
 
-const BRAND_NAME = "Inspire Best Minds";
+const BRAND_NAME = "UrbanAlert";
 const FROM_ADDRESS =
   process.env.RESEND_FROM ||
   `${BRAND_NAME} <${process.env.RESEND_FROM_ADDRESS || "onboarding@resend.dev"}>`;

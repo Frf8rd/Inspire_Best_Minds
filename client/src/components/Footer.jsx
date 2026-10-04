@@ -84,7 +84,7 @@ export function Footer() {
             fontSize: "0.94rem",
           }}
         >
-          <div>© {new Date().getFullYear()} UrbanPulse (Inspire Best Minds). Toate drepturile rezervate.</div>
+          <div>© {new Date().getFullYear()} UrbanAlert. Toate drepturile rezervate.</div>
           <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
             Dezvoltat cu <Heart size={14} style={{ color: "#ef4444" }} /> pentru orașe inteligente.
           </div>

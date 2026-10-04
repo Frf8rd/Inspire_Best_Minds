@@ -1,6 +1,6 @@
-# 🏙️ UrbanPulse — Platformă de Sesizări Urbane & Transparență Instituțională (Inspire BEST Minds)
+# 🏙️ UrbanAlert — Platformă de Sesizări Urbane & Transparență Instituțională
 
-**UrbanPulse** este o platformă web de ultimă generație concepută pentru remedierea rapidă a problemelor urbane prin implicare cetățenească, rutare inteligentă automată și transparență administrativă în timp real.
+**UrbanAlert** este o platformă web de ultimă generație concepută pentru remedierea rapidă a problemelor urbane prin implicare cetățenească, rutare inteligentă automată și transparență administrativă în timp real.
 
 ---
 

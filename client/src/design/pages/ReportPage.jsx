@@ -11,6 +11,7 @@ const DEFAULT_LOCATION = [47.0245, 28.8322];
 export default function ReportPage({ actions, t, locale, user, categories = CATEGORIES, onRequireAuth }) {
   const navigate = useNavigate();
   const mapElement = useRef(null);
+  const photoInput = useRef(null);
   const map = useLeafletMap(mapElement, DEFAULT_LOCATION, 13);
   const marker = useRef(null);
   const videoElement = useRef(null);
@@ -52,6 +53,7 @@ export default function ReportPage({ actions, t, locale, user, categories = CATE
       const next = marker.current.getLatLng();
       setPosition([next.lat, next.lng]);
       setLocationSelected(true);
+      setLocationMessage('');
     });
     leafletMap.on('click', (event) => {
       if (!titleReadyRef.current) {
@@ -155,6 +157,36 @@ export default function ReportPage({ actions, t, locale, user, categories = CATE
     setCameraPhoto(canvas.toDataURL('image/jpeg', 0.68));
     setCameraMessage('');
     stopCamera();
+  };
+
+  const selectPhoto = async (event) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/') || file.size > 8 * 1024 * 1024) {
+      setCameraMessage('Alege o imagine validă, de maximum 8 MB.');
+      input.value = '';
+      return;
+    }
+
+    try {
+      const image = await createImageBitmap(file);
+      const scale = Math.min(1, 1440 / Math.max(image.width, image.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(image.width * scale);
+      canvas.height = Math.round(image.height * scale);
+      const context = canvas.getContext('2d');
+      if (!context) throw new Error('Imaginea nu a putut fi procesată.');
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      image.close();
+      setCameraPhoto(canvas.toDataURL('image/jpeg', 0.72));
+      setCameraMessage('');
+    } catch (error) {
+      console.error('Unable to process report photo', error);
+      setCameraMessage('Imaginea nu a putut fi deschisă. Încearcă JPG sau PNG.');
+    } finally {
+      input.value = '';
+    }
   };
 
   const submitReport = async (event) => {
@@ -314,7 +346,7 @@ export default function ReportPage({ actions, t, locale, user, categories = CATE
               <div>
                 <span className="report-section-eyebrow">{'DOVAD\u0102 FOTO'}</span>
                 <h2>{'Arat\u0103-ne problema'}</h2>
-                <p>{'Fotografia se face direct cu camera. Nu po\u021bi alege imagini din galerie.'}</p>
+                <p>{'Fotografiază problema sau alege o imagine din galerie.'}</p>
               </div>
             </div>
             {cameraOpen ? (
@@ -343,6 +375,17 @@ export default function ReportPage({ actions, t, locale, user, categories = CATE
                 <strong>{'Adaug\u0103 o fotografie clar\u0103'}</strong>
                 <span>{'\u021atine camera stabil\u0103 \u0219i surprinde zona din apropiere.'}</span>
                 <button className="btn btn-secondary" type="button" onClick={openCamera}>Deschide camera</button>
+                <button className="btn btn-secondary" type="button" onClick={() => photoInput.current?.click()}>
+                  Alege din galerie
+                </button>
+                <input
+                  ref={photoInput}
+                  className="profile-avatar-input"
+                  type="file"
+                  accept="image/*"
+                  aria-label="Alege fotografia sesizării din galerie"
+                  onChange={selectPhoto}
+                />
               </div>
             )}
             {cameraMessage && <p className="report-inline-message" role="status">{cameraMessage}</p>}

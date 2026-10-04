@@ -308,7 +308,7 @@ const callers = {
       "https://openrouter.ai/api/v1/chat/completions",
       {
         authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "x-title": "UrbanPulse",
+        "x-title": "UrbanAlert",
       },
       {
         model,

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge.jsx';
 import { CATEGORIES, HERO_SLIDES, ISSUE_IMAGES } from '../data/categories.js';
-import { categoryLabel } from '../data/translations.js';
+import { categoryLabel, confirmationLabel } from '../data/translations.js';
 import { formatDate } from '../utils/date.js';
 import { Link } from 'react-router-dom';
 
@@ -150,7 +150,7 @@ export default function HomePage({ reports, categories = CATEGORIES, onSelectRep
                   <img src={ISSUE_IMAGES[report.cat] || ISSUE_IMAGES.groapa} alt="" loading="lazy" />
                   <span className="popular-report-copy">
                     <strong>{report.title}</strong>
-                    <small>{report.conf} {t('confirmations')}</small>
+                    <small>{report.conf} {confirmationLabel(locale, report.conf)}</small>
                   </span>
                   <StatusBadge status={report.st} locale={locale} />
                 </button>

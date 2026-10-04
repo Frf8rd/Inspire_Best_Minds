@@ -1,6 +1,11 @@
+import { Link } from 'react-router-dom';
+
 export default function PreferenceControls({ locale, onLocaleChange, theme, onThemeToggle, t }) {
   return (
     <div className="preference-controls">
+      <Link className="mobile-brand" to="/" aria-label={t('dashboardTitle')} title={t('dashboardTitle')}>
+        <img src="/logo.png" alt="" />
+      </Link>
       <label className="language-control">
         <span className="sr-only">{t('language')}</span>
         <select

@@ -16,7 +16,7 @@ export const TRANSLATIONS = {
     staffManager: 'Staff manager',
     administrator: 'Administrator',
     staff: 'Staff',
-    dashboardTitle: 'UrbanPulse',
+    dashboardTitle: 'UrbanAlert',
     cityCommunity: 'CHIȘINĂU · COMUNITATE ACTIVĂ',
     heroTitle: 'Orașul începe|cu fiecare dintre noi.',
     heroDescription: 'Observă. Raportează. Împreună îmbunătățim locul în care trăim.',
@@ -24,7 +24,7 @@ export const TRANSLATIONS = {
     reportProblem: 'Raportează o problemă',
     communityBetter: 'O COMUNITATE, UN ORAȘ MAI BUN',
     impactTitle: 'Problemele mici merită rezolvări reale.',
-    impactDescription: 'UrbanPulse îi ajută pe locuitori să semnaleze probleme din cartier și să urmărească rezolvarea lor. Sesizările ajung la instituțiile responsabile și fac nevoile comunității mai vizibile.',
+    impactDescription: 'UrbanAlert îi ajută pe locuitori să semnaleze probleme din cartier și să urmărească rezolvarea lor. Sesizările ajung la instituțiile responsabile și fac nevoile comunității mai vizibile.',
     roadsSidewalks: 'Drumuri și trotuare',
     streetLighting: 'Iluminat stradal',
     cleanlinessParking: 'Curățenie și parcare',
@@ -45,7 +45,7 @@ export const TRANSLATIONS = {
     seeAll: 'Vezi toate',
     footerTagline: 'Împreună facem orașul mai bun.',
     footerNavigation: 'Navigare footer',
-    footerAboutText: 'UrbanPulse aduce locuitorii și serviciile orașului mai aproape.',
+    footerAboutText: 'UrbanAlert aduce locuitorii și serviciile orașului mai aproape.',
     footerQuickLinks: 'Navigare rapidă',
     footerCommunityHeading: 'O voce pentru comunitate',
     footerCommunityText: 'Semnalează problemele din cartier, urmărește sesizările și contribuie la schimbări concrete în Chișinău.',
@@ -80,7 +80,7 @@ export const TRANSLATIONS = {
     profileTitle: 'Profilul meu',
     profileDescription: 'Urmărește contribuțiile tale și vezi cum ajuți comunitatea.',
     profileEyebrow: 'SPAȚIUL TĂU',
-    profileMember: 'Membru UrbanPulse',
+    profileMember: 'Membru UrbanAlert',
     profileContribute: 'Contribuie la oraș',
     profileChangePhoto: 'Schimbă fotografia de profil',
     profilePhotoInvalid: 'Alege un fișier imagine valid.',
@@ -136,7 +136,7 @@ export const TRANSLATIONS = {
     loginKicker: 'CHIȘINĂU / PLATFORMĂ CIVICĂ',
     loginHeadline: 'Orașul|începe|cu tine.',
     loginDescription: 'Observă. Raportează. Schimbă lucrurile din jurul tău, împreună cu comunitatea.',
-    brandTagline: 'URBANPULSE / CITY ACTION',
+    brandTagline: 'URBANALERT / CITY ACTION',
     accountProfile: 'Profilul lui {name}',
     newStatus: 'Nou',
     processingStatus: 'În lucru',
@@ -166,7 +166,7 @@ export const TRANSLATIONS = {
     staffManager: 'Менеджер персонала',
     administrator: 'Администратор',
     staff: 'Персонал',
-    dashboardTitle: 'UrbanPulse',
+    dashboardTitle: 'UrbanAlert',
     cityCommunity: 'КИШИНЁВ · АКТИВНОЕ СООБЩЕСТВО',
     heroTitle: 'Город начинается|с каждого из нас.',
     heroDescription: 'Замечайте проблемы, сообщайте о них и вместе улучшайте место, где мы живём.',
@@ -174,7 +174,7 @@ export const TRANSLATIONS = {
     reportProblem: 'Сообщить о проблеме',
     communityBetter: 'СООБЩЕСТВО — ЛУЧШИЙ ГОРОД',
     impactTitle: 'Даже небольшие проблемы заслуживают решения.',
-    impactDescription: 'UrbanPulse помогает жителям сообщать о проблемах района и следить за их решением. Обращения передаются ответственным учреждениям и помогают сделать потребности сообщества заметнее.',
+    impactDescription: 'UrbanAlert помогает жителям сообщать о проблемах района и следить за их решением. Обращения передаются ответственным учреждениям и помогают сделать потребности сообщества заметнее.',
     roadsSidewalks: 'Дороги и тротуары',
     streetLighting: 'Уличное освещение',
     cleanlinessParking: 'Чистота и парковка',
@@ -195,7 +195,7 @@ export const TRANSLATIONS = {
     seeAll: 'Показать все',
     footerTagline: 'Вместе мы делаем город лучше.',
     footerNavigation: 'Навигация внизу страницы',
-    footerAboutText: 'UrbanPulse помогает жителям и городским службам быть ближе друг к другу.',
+    footerAboutText: 'UrbanAlert помогает жителям и городским службам быть ближе друг к другу.',
     footerQuickLinks: 'Быстрая навигация',
     footerCommunityHeading: 'Голос сообщества',
     footerCommunityText: 'Сообщайте о проблемах района, следите за обращениями и помогайте менять Кишинёв к лучшему.',
@@ -230,7 +230,7 @@ export const TRANSLATIONS = {
     profileTitle: 'Мой профиль',
     profileDescription: 'Следите за своими обращениями и вкладом в жизнь сообщества.',
     profileEyebrow: 'ВАШ ПРОФИЛЬ',
-    profileMember: 'Участник UrbanPulse',
+    profileMember: 'Участник UrbanAlert',
     profileContribute: 'Помочь городу',
     profileChangePhoto: 'Изменить фото профиля',
     profilePhotoInvalid: 'Выберите подходящий файл изображения.',
@@ -286,7 +286,7 @@ export const TRANSLATIONS = {
     loginKicker: 'КИШИНЁВ / ГОРОДСКАЯ ПЛАТФОРМА',
     loginHeadline: 'Город|начинается|с тебя.',
     loginDescription: 'Замечайте проблемы и меняйте то, что вас окружает, вместе с соседями.',
-    brandTagline: 'URBANPULSE / ГОРОДСКИЕ ИЗМЕНЕНИЯ',
+    brandTagline: 'URBANALERT / ГОРОДСКИЕ ИЗМЕНЕНИЯ',
     accountProfile: 'Профиль: {name}',
     newStatus: 'Новое',
     processingStatus: 'В работе',
@@ -337,4 +337,18 @@ export function serviceLabel(locale, service, translate) {
 
 export function statusLabel(locale, key, fallback) {
   return STATUS_TRANSLATIONS[locale]?.[key] || fallback;
+}
+
+export function confirmationLabel(locale, count) {
+  const value = Math.abs(Number(count)) || 0;
+  if (locale === 'ru') {
+    const lastTwo = value % 100;
+    const lastDigit = value % 10;
+    if (lastTwo >= 11 && lastTwo <= 14) return 'подтверждений';
+    if (lastDigit === 1) return 'подтверждение';
+    if (lastDigit >= 2 && lastDigit <= 4) return 'подтверждения';
+    return 'подтверждений';
+  }
+  if (locale === 'ro') return value === 1 ? 'confirmare' : 'confirmări';
+  return value === 1 ? 'confirmation' : 'confirmations';
 }

@@ -4,9 +4,12 @@ import "leaflet/dist/leaflet.css";
 import "./design/styles/global.css";
 import "./design/styles/app.css";
 import App from "./App.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 );

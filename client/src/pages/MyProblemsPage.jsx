@@ -36,7 +36,7 @@ export function MyProblemsPage() {
         <div className="my-problems-title">
           <span className="my-problems-icon"><Layers size={22} /></span>
           <div>
-            <span className="my-problems-eyebrow">Spațiul tău UrbanPulse</span>
+            <span className="my-problems-eyebrow">Spațiul tău UrbanAlert</span>
             <h1>Sesizările mele</h1>
           </div>
         </div>

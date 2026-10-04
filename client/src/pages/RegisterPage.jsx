@@ -66,7 +66,7 @@ export function RegisterPage() {
       >
         <div style={{ textAlign: "center", marginBottom: "2rem" }}>
           <h2 style={{ fontSize: "2.06rem", color: "#0f172a", marginBottom: "0.5rem" }}>
-            Creează un cont <span style={{ color: "#2563eb" }}>UrbanPulse</span>
+            Creează un cont <span style={{ color: "#2563eb" }}>UrbanAlert</span>
           </h2>
           <p style={{ fontSize: "1.06rem", color: "#64748b" }}>
             Implică-te activ în dezvoltarea orașului tău

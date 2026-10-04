@@ -1,6 +1,6 @@
-// În dev, Vite face proxy pe /api. În producție setează VITE_API_URL,
+// În dev, Vite face proxy pe /api. În producție setează VITE_API_URL sau VITE_API_BASE_URL,
 // de exemplu "https://api.exemplu.md/api" (sau lasă gol dacă există un rewrite pe /api).
-const BASE_URL = (import.meta.env.VITE_API_URL || "/api").replace(/\/+$/, "");
+const BASE_URL = (import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/+$/, "");
 
 // Originea API-ului (fără sufixul /api). Fișierele din /uploads sunt servite de backend.
 export const API_ORIGIN = /^https?:\/\//i.test(BASE_URL) ? BASE_URL.replace(/\/api$/, "") : "";

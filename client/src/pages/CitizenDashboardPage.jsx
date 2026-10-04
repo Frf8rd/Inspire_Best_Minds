@@ -61,7 +61,7 @@ export function CitizenDashboardPage() {
             Salut, {user?.name || "Cetățean"}! 👋
           </h1>
           <p style={{ color: "#bfdbfe", fontSize: "1.12rem", maxWidth: "600px" }}>
-            Bine ai venit în panoul tău cetățenesc UrbanPulse. Urmărește stadiul sesizărilor tale și implică-te în rezolvarea problemelor urbane.
+            Bine ai venit în panoul tău cetățenesc UrbanAlert. Urmărește stadiul sesizărilor tale și implică-te în rezolvarea problemelor urbane.
           </p>
         </div>
 
